@@ -1,12 +1,17 @@
-* Release version 0.2.0 (without the underscore) on CPAN.
+* Possibly do something about:
+     my $host = $sub_contents->{host} || $args{host} or
+        die "Host not specified!";
+
+     In create_new_nav_menu_item, and in
+     render_tree_contents.
+
+        - Done.
 
 Long-Term:
 ----------
 
 * Use HTML::Widgets::NavMenu::Tree::Node and its accessors for the rest
   of the $ptr->{text} etc. manipulations.
-
-* Write a unit-test for HTML::Widgets::NavMenu::get_cross_host_rel_url().
 
 * Use Build.PL instead of Makefile.PL. (?)
 
@@ -25,6 +30,3 @@ path and doesn't expand in others.
 
 * In HTML::Widgets::NavMenu::Tree::Node - make sure url_type accepts only
 its enum values.
-
-
-

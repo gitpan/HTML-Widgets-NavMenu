@@ -2,7 +2,7 @@
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '0.2.0';
+our $VERSION = '0.3.2_00';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -54,6 +54,92 @@ sub initialize
 }
 
 1;
+
+package HTML::Widgets::NavMenu::Iterator::GetCurrentlyActive;
+
+use base 'HTML::Widgets::NavMenu::Iterator::Base';
+
+sub initialize
+{
+    my $self = shift;
+
+    my %args = (@_);
+
+    $self->SUPER::initialize(@_);
+
+    $self->{'tree'} = $args{'tree'};
+
+    $self->{'item_found'} = 0;
+    
+    return 0;
+}
+
+sub get_initial_node
+{
+    my $self = shift;
+
+    return $self->{'tree'};
+}
+
+sub item_matches
+{
+    my $self = shift;
+    my $item = $self->top();
+    my $url = $item->node()->url();
+    my $nav_menu = $self->nav_menu();
+    return
+        (
+            ($item->accum_state()->{'host'} eq $nav_menu->current_host()) &&
+            (defined($url) && ($url eq $nav_menu->path_info()))
+        );
+}
+
+sub node_start
+{
+    my $self = shift;
+
+    if ($self->item_matches())
+    {
+        my @coords = @{$self->get_coords()};
+        $self->{'ret_coords'} = [ @coords ];
+        $self->{'temp_coords'} = [ @coords, (-1) ];
+        $self->top()->node()->mark_as_current();
+        $self->{'item_found'} = 1;
+    }
+}
+
+sub node_end
+{
+    my $self = shift;
+    if ($self->{'item_found'})
+    {
+        # Skip the first node, because the coords refer
+        # to the nodes below it.
+        my $idx = pop(@{$self->{'temp_coords'}});
+        if ($idx >= 0)
+        {
+            my $node = $self->top()->node();
+            $node->update_based_on_sub(
+                $node->get_nth_sub(
+                    $idx
+                )
+            );
+        }
+    }
+}
+
+sub node_should_recurse
+{
+    my $self = shift;
+    return (! $self->{'item_found'});
+}
+
+sub get_final_coords
+{
+    my $self = shift;
+
+    return $self->{'ret_coords'};
+}
 
 package HTML::Widgets::NavMenu;
 
@@ -220,8 +306,13 @@ sub get_cross_host_rel_url
     my $host = $args{host};
     my $host_url = $args{host_url};
     my $url_type = $args{url_type};
+    my $url_is_abs = $args{url_is_abs};
 
-    if (($host ne $self->current_host()) || ($url_type eq "full_abs"))
+    if ($url_is_abs)
+    {
+        return $host_url;
+    }
+    elsif (($host ne $self->current_host()) || ($url_type eq "full_abs"))
     {
         return $self->get_full_abs_url(@_);
     }
@@ -237,6 +328,20 @@ sub get_cross_host_rel_url
     {
         die "Unknown url_type \"$url_type\"!\n";
     }
+}
+
+sub get_url_to_item
+{
+    my $self = shift;
+    my (%args) = (@_);
+    my $item = $args{'item'};
+
+    return $self->get_cross_host_rel_url(
+        'host' => $item->accum_state()->{'host'},
+        'host_url' => ($item->node->url() || ""),
+        'url_type' => $item->get_url_type(),
+        'url_is_abs' => $item->node->url_is_abs(),
+    );
 }
 
 sub gen_blank_nav_menu_tree_node
@@ -263,9 +368,6 @@ sub create_new_nav_menu_item
     my %args = (@_);
 
     my $sub_contents = $args{sub_contents};
-    my $coords = $args{coords};
-    my $host = $sub_contents->{host} || $args{host} or
-        die "Host not specified!";
 
     my $new_item = $self->gen_blank_nav_menu_tree_node();
 
@@ -293,46 +395,24 @@ sub render_tree_contents
 
     my %args = (@_);
 
-    my $path_info = $self->path_info();    
+    my $path_info = $self->path_info();
 
     my $sub_contents = $args{sub_contents};
-    my $coords = $args{coords};
-    my $host = $sub_contents->{host} || $args{host} or
-        die "Host not specified!";
-    my $current_coords_ptr = $args{current_coords_ptr};
 
     my $new_item =
         $self->create_new_nav_menu_item(
             %args,
         );
 
-    if (exists($sub_contents->{url}))
-    {
-        if (($sub_contents->{url} eq $path_info) && ($host eq $self->current_host()))
-        {
-            $$current_coords_ptr = [ @$coords ];
-            $new_item->mark_as_current();
-        }
-    }
-
     if (exists($sub_contents->{subs}))
     {
-        my $index = 0;
-        my $subs = [];
         foreach my $sub_contents_sub (@{$sub_contents->{subs}})
         {
             $new_item->add_sub(
                 $self->render_tree_contents(
                     'sub_contents' => $sub_contents_sub,
-                    'coords' => [@$coords, $index],
-                    'host' => $host,
-                    'current_coords_ptr' => $current_coords_ptr,
                 )
             );
-        }
-        continue
-        {
-            $index++;
         }
     }
     return $new_item;
@@ -403,7 +483,7 @@ sub get_prev_coords
     if (scalar(@coords) == 0)
     {
         return undef;
-    }    
+    }
     elsif ($coords[$#coords] > 0)
     {
         # Get the previous leaf
@@ -464,46 +544,18 @@ sub get_top_coords
     }
 }
 
-sub find_node_by_coords
-{
-    my $self = shift;
-    my $coords = shift;
-    my $callback = shift || (sub { });
-    my $ptr = $self->{tree_contents};
-    my $host = $ptr->{host};
-    my $rec_url_type = ($ptr->{rec_url_type} || "rel");
-    my $idx = 0;
-    my $internal_callback = sub {
-        $callback->('idx' => $idx, 'ptr' => $ptr, 'host' => $host, 'rec_url_type' => $rec_url_type,);
-    };
-    $internal_callback->();
-    foreach my $c (@$coords)
-    {
-        $ptr = $ptr->{subs}->[$c];
-        $idx++;
-        if ($ptr->{host})
-        {
-            $host = $ptr->{host};
-        }
-        if ($ptr->{rec_url_type})
-        {
-            $rec_url_type = $ptr->{rec_url_type};
-        }
-        $internal_callback->();
-    }
-    return { 'ptr' => $ptr, 'host' => $host, 'rec_url_type' => $rec_url_type, };
-}
-
 sub is_skip
 {
     my $self = shift;
     my $coords = shift;
 
-    my $ret = $self->find_node_by_coords($coords);
+    my $iterator = $self->get_nav_menu_traverser();
 
-    my $ptr = $ret->{ptr};
+    my $ret = $iterator->find_node_by_coords($coords);
 
-    return $ptr->{skip};
+    my $item = $ret->{item};
+
+    return $item->node()->skip();
 }
 
 sub get_coords_while_skipping_skips
@@ -512,7 +564,7 @@ sub get_coords_while_skipping_skips
 
     my $callback = shift;
     my $coords = shift || $self->get_current_coords();
-    
+
     my $do_once = 1;
 
     while ($do_once || $self->is_skip($coords))
@@ -566,26 +618,11 @@ sub get_rel_url_from_coords
     my $coords = shift;
 
     my ($ptr,$host);
-    my $node_ret = $self->find_node_by_coords($coords);
-    $ptr = $node_ret->{ptr};
-    $host = $node_ret->{host};
+    my $iterator = $self->get_nav_menu_traverser();
+    my $node_ret = $iterator->find_node_by_coords($coords);
+    my $item = $node_ret->{'item'};
 
-    return $self->get_cross_host_rel_url(
-        'host' => $host,
-        'host_url' => ($ptr->{url} || ""),
-        'url_type' => ($ptr->{url_type} || $node_ret->{rec_url_type} || "rel"),
-    );
-}
-
-sub fill_leading_path
-{
-    my $self = shift;
-
-    my %args = (@_);
-
-    my $coords = $self->get_current_coords();
-
-    $self->find_node_by_coords($coords, $args{'callback'});
+    return $self->get_url_to_item('item' => $item);
 }
 
 # The traversed_tree is the tree that is calculated from the tree given
@@ -612,11 +649,18 @@ sub gen_traversed_tree
 
     my $tree = 
         $self->render_tree_contents(
-            'sub_tree' => undef,
             'sub_contents' => $self->{tree_contents},
-            'coords' => [],
-            'current_coords_ptr' => \$current_coords,
             );
+
+    my $find_coords_iterator =
+        HTML::Widgets::NavMenu::Iterator::GetCurrentlyActive->new(
+            'nav_menu' => $self,
+            'tree' => $tree,
+        );
+
+    $find_coords_iterator->traverse();
+
+    $current_coords = $find_coords_iterator->get_final_coords() || [];
 
     # The root should always be expanded because:
     # 1. If one of the leafs was marked as expanded so will its ancestors
@@ -626,6 +670,51 @@ sub gen_traversed_tree
     $tree->expand();
    
     return {'tree' => $tree, 'current_coords' => $current_coords };
+}
+
+sub get_leading_path
+{
+    my $self = shift;
+    
+    my @leading_path;
+
+    {
+        my $iterator = $self->get_nav_menu_traverser(); 
+        my $fill_leading_path_callback =
+            sub {
+                my %args = (@_);
+                my $item = $args{item};
+                my $iterator = $args{'self'};
+                my $node = $item->node();
+                # This is a workaround for the root link.
+                my $host_url = (defined($node->url()) ? ($node->url()) : "");
+                my $host = $item->accum_state()->{'host'};
+
+                my $url_type =
+                    ($node->url_is_abs() ?
+                        "full_abs" :
+                        $item->get_url_type()
+                    );
+
+                push @leading_path,
+                    HTML::Widgets::NavMenu::LeadingPath::Component->new(
+                        'host' => $host,
+                        'host_url' => $host_url,
+                        'title' => $node->title(),
+                        'label' => $node->text(),
+                        'direct_url' =>
+                            $self->get_url_to_item('item' => $item),
+                        'url_type' => $url_type,
+                    );
+            };
+
+        $iterator->find_node_by_coords(
+            $self->get_current_coords(),
+            $fill_leading_path_callback,
+            );
+    }
+
+    return \@leading_path;
 }
 
 sub render
@@ -639,41 +728,6 @@ sub render
     my $html = $iterator->get_results();
     
     my $hosts = $self->{hosts};
-
-    my @leading_path;
-
-    {
-        my $fill_leading_path_callback =
-            sub {
-                my %args = (@_);
-                my $ptr = $args{ptr};
-                my $host = $args{host};
-                # This is a workaround for the root link.
-                my $host_url = $ptr->{url} || "";
-
-                my $url_type = 
-                    ($ptr->{url_type} || $args{rec_url_type} || "rel");
-
-                push @leading_path,
-                    HTML::Widgets::NavMenu::LeadingPath::Component->new(
-                        'host' => $host,
-                        'host_url' => $host_url,
-                        'title' => $ptr->{title},
-                        'label' => $ptr->{text},
-                        'direct_url' =>
-                            $self->get_cross_host_rel_url(
-                                'host' => $host,
-                                'host_url' => $host_url,
-                                'url_type' => $url_type,
-                            ),
-                        'url_type' => $url_type,
-                    );
-            };
-
-        $self->fill_leading_path(
-            'callback' => $fill_leading_path_callback,
-        );
-    }
 
     my %nav_links;
 
@@ -706,7 +760,7 @@ sub render
     return 
         {
             'html' => $html,
-            'leading_path' => \@leading_path,
+            'leading_path' => $self->get_leading_path(),
             'nav_links' => \%nav_links,
         };
 }
@@ -1029,6 +1083,18 @@ to the same host. Something like C<http://vipe.technion.ac.il/~shlomif/me/about.
 This is similar to C<'url_type'> only it recurses, to the sub-tree of the
 node. If both C<'url_type'> and C<'rec_url_type'> are specified for a node,
 then the value of C<'url_type'> will hold.
+
+=item 'url_is_abs'
+
+This flag, if true, indicates that the URL specified by the C<'url'> key
+is an absolute URL like C<http://www.myhost.com/> and should not be 
+treated as a path within the site. All links to the page associated with
+this node will contain the URL verbatim.
+
+Note that using absolute URLs as part of the site flow is discouraged
+because once they are accessed, the navigation within the primary site 
+is lost. A better idea would be to create a separate page within the
+site, that will link to the external URL.
 
 =back
 

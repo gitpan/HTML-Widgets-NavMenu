@@ -1,6 +1,28 @@
+package HTML::Widgets::NavMenu::Iterator::Html::Item;
+
+use base qw(HTML::Widgets::NavMenu::Tree::Iterator::Item);
+
+sub get_url_type
+{
+    my $item = shift;
+    return
+        ($item->node()->url_type() ||
+            $item->accum_state()->{'rec_url_type'} ||
+            "rel");
+}
+
 package HTML::Widgets::NavMenu::Iterator::Html;
 
 use base qw(HTML::Widgets::NavMenu::Iterator::Base);
+
+sub construct_new_item
+{
+    my $self = shift;
+
+    return HTML::Widgets::NavMenu::Iterator::Html::Item->new(
+        @_
+    );
+}
 
 sub node_start
 {
@@ -75,13 +97,8 @@ sub get_a_tag
 
     $tag .= " href=\"" .
         CGI::escapeHTML(
-            $self->nav_menu()->get_cross_host_rel_url(
-                'host' => $self->_get_top_host(),
-                'host_url' => $node->url(),
-                'url_type' => 
-                    ($node->url_type() ||
-                        $item->accum_state()->{'rec_url_type'} ||
-                        "rel"),
+            $self->nav_menu()->get_url_to_item(
+                'item' => $item,
             )
         ). "\"";
     if (defined($title))
@@ -91,6 +108,7 @@ sub get_a_tag
     $tag .= ">" . $node->text() . "</a>";
     return $tag;
 }
+
 
 1;
 

@@ -6,7 +6,7 @@ use base 'Class::Accessor';
 
 __PACKAGE__->mk_accessors(
     qw(CurrentlyActive expanded hide host role rec_url_type),
-    qw(separator show_always subs text title url url_type),
+    qw(separator show_always skip subs text title url url_is_abs url_type),
     );
 
 sub initialize
@@ -37,10 +37,17 @@ sub _process_new_sub
 {
     my $self = shift;
     my $sub = shift;
+    $self->update_based_on_sub($sub);    
+}
+
+sub update_based_on_sub
+{
+    my $self = shift;
+    my $sub = shift;
     if ($sub->expanded())
     {
         $self->expand();
-    }
+    }    
 }
 
 sub add_sub
@@ -50,6 +57,13 @@ sub add_sub
     push (@{$self->subs}, $sub);
     $self->_process_new_sub($sub);
     return 0;
+}
+
+sub get_nth_sub
+{
+    my $self = shift;
+    my $idx = shift;
+    return $self->subs()->[$idx];
 }
 
 sub list_regular_keys
@@ -63,7 +77,7 @@ sub list_boolean_keys
 {
     my $self = shift;
 
-    return (qw(hide separator));
+    return (qw(hide separator skip url_is_abs));
 }
 
 sub set_values_from_hash_ref
