@@ -1,12 +1,76 @@
 package HTML::Widgets::NavMenu::Iterator::NavMenu;
 
+use strict;
+
 use base qw(HTML::Widgets::NavMenu::Iterator::Html);
+
+use CGI;
+
+sub initialize
+{
+    my $self = shift;
+
+    $self->SUPER::initialize(@_);
+
+    my %args = (@_);
+
+    my $ul_classes = ($args{'ul_classes'} || []);
+    # Make a fresh copy just to be on the safe side.
+    $self->{'ul_classes'} = [ @$ul_classes ];
+
+    return 0;
+}
+
+# Depth is 1 for the uppermost depth.
+sub gen_ul_tag
+{
+    my $self = shift;
+
+    my %args = (@_);
+
+    my $depth = $args{'depth'};
+
+    my $class = $self->get_ul_class('depth' => $depth);
+
+    return "<ul" .
+        (defined($class) ?
+            (" class=\"" . CGI::escapeHTML($class) . "\"") :
+            ""
+        ) . ">";
+}
+
+sub get_ul_class
+{
+    my $self = shift;
+
+    my %args = (@_);
+
+    my $depth = $args{'depth'};
+
+    return $self->{'ul_classes'}->[$depth-1];
+}
+ 
+# This functions get something like either <a href="./mydir">Link Value</a>
+# or <b>Link Value</b>
+sub get_link_tag
+{
+    my $self = shift;
+    my $node = $self->top->node();
+    if ($node->CurrentlyActive())
+    {
+        return "<b>" . $node->value() . "</b>";
+    }
+    else
+    {
+        return $self->get_a_tag();
+    }
+}
 
 sub start_root
 {
     my $self = shift;
     
-    $self->_add_tags("<ul class=\"navbarmain\">");
+    $self->_add_tags($self->gen_ul_tag('depth' => $self->stack->len()));
 }
 
 sub start_sep
@@ -16,6 +80,24 @@ sub start_sep
     $self->_add_tags("</ul>");
 }
 
+sub start_handle_role
+{
+    my $self = shift;
+    return $self->start_handle_non_role();
+}
+
+sub start_handle_non_role
+{
+    my $self = shift;
+    my $top_item = $self->top;
+    my @tags_to_add = ("<li>", $self->get_link_tag());
+    if ($top_item->num_subs_to_go() && $self->is_expanded())
+    {
+        push @tags_to_add, 
+            ("<br />", $self->gen_ul_tag('depth' => $self->stack->len()));
+    }
+    $self->_add_tags(@tags_to_add);
+}
 
 sub start_regular
 {
@@ -30,54 +112,50 @@ sub start_regular
     }
     else
     {
-        my $tag;
-        if ($node->CurrentlyActive())
+        if ($self->is_role_specified())
         {
-            $tag = "<b>" . $node->value() . "</b>";
+            $self->start_handle_role();
         }
         else
         {
-            $tag = $self->get_a_tag();
+            $self->start_handle_non_role();
         }
-        my @tags_to_add;
-        if ($self->is_role_header())
-        {
-            @tags_to_add = ("</ul>","<h2>", $tag, "</h2>",
-                "<ul class=\"navbarmain\">");
-        }
-        else
-        {
-            @tags_to_add = ("<li>", $tag);
-            if ($top_item->num_subs_to_go() && $self->is_expanded())
-            {
-                push @tags_to_add, 
-                    ("<br />", "<ul class=\"navbarnested\">");
-            }
-        }
-        $self->_add_tags(@tags_to_add);
     }
 }
 
 sub end_sep
 {
     my $self = shift;
-    my $class =
-        ($self->stack->len() <= 2) ?
-            "navbarmain" :
-            "navbarnested";
-    $self->_add_tags("<ul class=\"$class\">");
+
+    $self->_add_tags($self->gen_ul_tag('depth' => $self->stack->len()-1));
+}
+
+sub end_handle_role
+{
+    my $self = shift;
+    return $self->end_handle_non_role();
+}
+
+sub end_handle_non_role
+{
+    my $self = shift;
+    return $self->SUPER::end_regular();
 }
 
 sub end_regular
 {
     my $self = shift;
-    if ($self->is_hidden() || $self->is_role_header())
+    if ($self->is_hidden())
     {
         # Do nothing
     }
+    elsif ($self->is_role_specified())
+    {
+        $self->end_handle_role();
+    }
     else
     {
-        return $self->SUPER::end_regular();
+        $self->end_handle_non_role();
     }
 }
 
@@ -94,10 +172,16 @@ sub is_expanded
     return ($node->expanded() || $self->top->accum_state->{'show_always'});
 }
 
-sub is_role_header
+sub get_role
 {
     my $self = shift;
-    return ($self->top->node->role() eq "header");
+    return $self->top->node->role();
+}
+
+sub is_role_specified
+{
+    my $self = shift;
+    return defined($self->get_role());
 }
 
 1;

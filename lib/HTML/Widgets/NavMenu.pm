@@ -4,7 +4,7 @@ use utf8;
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '0.1.10_00';
+our $VERSION = '0.1.12_00';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -93,7 +93,17 @@ sub initialize
 
     $self->{current_host} = $current_host;
 
+    $self->{'ul_classes'} = ($args{'ul_classes'} || []);
+
     return 0;
+}
+
+sub get_nav_menu_traverser_args
+{
+    my $self = shift;
+
+    return  ('nav_menu' => $self,
+            'ul_classes' => $self->{'ul_classes'});
 }
 
 sub get_nav_menu_traverser
@@ -102,7 +112,7 @@ sub get_nav_menu_traverser
 
     return
         HTML::Widgets::NavMenu::Iterator::NavMenu->new(
-            'nav_menu' => $self,
+            $self->get_nav_menu_traverser_args()
         );
 }
 
@@ -229,21 +239,7 @@ sub create_new_nav_menu_item
 
     my $new_item = $self->gen_blank_nav_menu_tree_node();
 
-    foreach my $key (qw(host role show_always title url value))
-    {
-        if (exists($sub_contents->{$key}))
-        {
-            $new_item->set($key, $sub_contents->{$key});
-        }
-    }
-
-    foreach my $key (qw(hide separator))
-    {
-        if ($sub_contents->{$key})
-        {
-            $new_item->set($key, 1);
-        }
-    }
+    $new_item->set_values_from_hash_ref($sub_contents);
 
     if (exists($sub_contents->{expand_re}))
     {

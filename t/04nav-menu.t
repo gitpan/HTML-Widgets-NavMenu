@@ -5,6 +5,7 @@ use strict;
 use Test::More tests => 10;
 
 use HTML::Widgets::NavMenu;
+use HTML::Widgets::NavMenu::HeaderRole;
 
 use HTML::Widgets::NavMenu::Test::Data;
 use HTML::Widgets::NavMenu::Test::Util;
@@ -27,22 +28,11 @@ sub validate_nav_menu
     my $nav_menu = HTML::Widgets::NavMenu->new(
         'path_info' => "/hello/",
         @{$test_data->{'minimal'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
     my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
@@ -65,22 +55,11 @@ EOF
     my $nav_menu = HTML::Widgets::NavMenu->new(
         'path_info' => "/me/",
         @{$test_data->{'two_sites'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
     my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
@@ -117,22 +96,11 @@ EOF
     my $nav_menu = HTML::Widgets::NavMenu->new(
         'path_info' => "/me/",
         @{$test_data->{'expand_re'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
     my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
@@ -167,22 +135,11 @@ EOF
     my $nav_menu = HTML::Widgets::NavMenu->new(
         'path_info' => "/me/",
         @{$test_data->{'expand_re'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
     my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
@@ -215,22 +172,11 @@ EOF
     my $nav_menu = HTML::Widgets::NavMenu->new(
         'path_info' => "/me/",
         @{$test_data->{'show_always'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
     my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
@@ -281,22 +227,11 @@ EOF
     my $nav_menu = HTML::Widgets::NavMenu->new(
         'path_info' => "/me/bio.html",
         @{$test_data->{'items_in_sub'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
     my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
@@ -330,22 +265,11 @@ EOF
     my $nav_menu = HTML::Widgets::NavMenu->new(
         'path_info' => "/me/",
         @{$test_data->{'separator'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
     my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
@@ -386,22 +310,11 @@ EOF
     my $nav_menu = HTML::Widgets::NavMenu->new(
         'path_info' => "/me/",
         @{$test_data->{'hidden_item'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
     my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
@@ -430,25 +343,14 @@ EOF
 
 
 {
-    my $nav_menu = HTML::Widgets::NavMenu->new(
+    my $nav_menu = HTML::Widgets::NavMenu::HeaderRole->new(
         'path_info' => "/good/",
         @{$test_data->{'header_role'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
     my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
@@ -475,25 +377,14 @@ EOF
 }
 
 {
-    my $nav_menu = HTML::Widgets::NavMenu->new(
+    my $nav_menu = HTML::Widgets::NavMenu::HeaderRole->new(
         'path_info' => "/me/",
         @{$test_data->{'header_role'}},
+        'ul_classes' => [ "navbarmain", ("navbarnested") x 5 ],
     );
 
-    my $rendered = 
-        $nav_menu->render(
-            'no_ie' => "true",
-            'styles' =>
-            {
-                'bar' => 'nav',
-                'level0' => 'navbarmain',
-                'level1' => 'navbarnested',
-                'level2' => "navbarnested",
-                'level3' => "navbarnested",
-                'level4' => "navbarnested",
-                'list' => "navbarmain",
-            },
-        );
+    my $rendered =
+        $nav_menu->render();
 
     my $expected_string = <<"EOF";
 <ul class="navbarmain">
