@@ -4,7 +4,7 @@ use utf8;
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '0.1.13_00';
+our $VERSION = '0.1.14_00';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -68,6 +68,7 @@ use Error qw(:try);
 require HTML::Widgets::NavMenu::Iterator::NavMenu;
 require HTML::Widgets::NavMenu::Iterator::SiteMap;
 require HTML::Widgets::NavMenu::Tree::Node;
+require HTML::Widgets::NavMenu::Predicate;
 
 sub new
 {
@@ -198,6 +199,12 @@ sub path_info
     return $self->{path_info};
 }
 
+sub current_host
+{
+    my $self = shift;
+    return $self->{'current_host'};
+}
+
 sub get_cross_host_rel_url
 {
     my $self = shift;
@@ -241,14 +248,14 @@ sub create_new_nav_menu_item
 
     $new_item->set_values_from_hash_ref($sub_contents);
 
-    if (exists($sub_contents->{expand_re}))
+    if (exists($sub_contents->{'expand'}))
     {
-        my $regexp = $sub_contents->{expand_re};
-        # If $regexp is empty - then always succeeed.
-        # This is because a pattern match in which the pattern
-        # evaluates to an empty regexp uses the last successful pattern
-        # match.
-        if (($regexp eq "") || ($self->path_info() =~ /$regexp/))
+        if (HTML::Widgets::NavMenu::Predicate->new(
+                'spec' => $sub_contents->{'expand'},
+            )->evaluate(
+                'path_info' => $self->path_info(),
+                'current_host' => $self->current_host(),
+            ))
         {
             $new_item->expand();
         }
@@ -622,7 +629,7 @@ sub render
                         'host' => $host,
                         'host_url' => $host_url,
                         'title' => $ptr->{title},
-                        'label' => $ptr->{value},
+                        'label' => $ptr->{text},
                         'direct_url' =>
                             $self->get_cross_host_rel_url(
                                 'host' => $host,
@@ -673,6 +680,10 @@ sub render
         };
 }
 
+1;
+
+__END__
+
 =head1 NAME
 
 HTML::Widgets::NavMenu - A Perl Module for Generating HTML Navigation Menus
@@ -695,17 +706,17 @@ HTML::Widgets::NavMenu - A Perl Module for Generating HTML Navigation Menus
             'tree_contents' =>
             {
                 'host' => "default",
-                'value' => "Top 1",
+                'text' => "Top 1",
                 'title' => "T1 Title",
                 'expand_re' => "",
                 'subs' =>
                 [
                     {
-                        'value' => "Home",
+                        'text' => "Home",
                         'url' => "",
                     },
                     {
-                        'value' => "About Me",
+                        'text' => "About Me",
                         'title' => "About Myself",
                         'url' => "me/",
                     },
@@ -721,11 +732,10 @@ HTML::Widgets::NavMenu - A Perl Module for Generating HTML Navigation Menus
 
 This module generates a navigation menu for a site. It can also generate
 a complete site map, a path of leading components, and also keeps
-track of navigation links ("Next", "Prev", "Up", etc.) It's a little bit 
-scarse on documentation now, because it's still was not made ready for
-public consumption yet. You can start from the example above and see more
-examples in the tests, and complete working sites in the Subversion
-repositories at L<http://stalker.iguide.co.il:8080/svn/shlomif-homepage/>
+track of navigation links ("Next", "Prev", "Up", etc.) You can start from the 
+example above and see more examples in the tests, and complete working sites 
+in the Subversion repositories at 
+L<http://stalker.iguide.co.il:8080/svn/shlomif-homepage/>
 and L<http://opensvn.csie.org/perlbegin/perl-begin/>.
 
 To use this module call the constructor with the following named arguments:
@@ -891,10 +901,10 @@ contain a leading slash. This value does not propagate further.
 
 The URL should be specified for every nodes except separators and the such.
 
-=item 'value'
+=item 'text'
 
 This is the text that will be presented to the user as the text of the 
-link inside the navigation bar. E.g.: if C<'value'> is "Hi There", then the
+link inside the navigation bar. E.g.: if C<'text'> is "Hi There", then the
 link will look something like this:
 
     <a href="my-url/">Hi There</a>
@@ -909,7 +919,7 @@ as is, and so should be escaped to prevent HTML-injection attacks.
 =item 'title'
 
 This is the text of the link tag's title attribute. It is also not
-processed and so the user of the module, should make sure it is escaped
+processed and so the user of the module should make sure it is escaped
 if needed, to prevent HTML-injection attacks. It is optional, and if not
 specified, no title will be presented.
 
@@ -945,11 +955,12 @@ DocBook's "role" attribute, only induces different HTML markup. The vanilla
 HTML::Widgets::NavMenu does not distinguish between any roles, but see
 L<HTML::Widgets::NavMenu::HeaderRole>.
 
-=item 'expand_re'
+=item 'expand'
 
-This specifies a regular expression to be matched against the path to determine
-if the navigation menu should be expanded at this node. If it does, all of 
-the nodes up to it will expand as well.
+This specifies a predicate (a Perl value that is evaluated to a boolean
+value, see "Predicate Values" below.) to be matched against the path and 
+current host to determine if the navigation menu should be expanded at this 
+node. If it does, all of the nodes up to it will expand as well.
 
 =item 'show_always'
 
@@ -959,6 +970,74 @@ function is similar to C<'expand_re'> but its propagation semantics the
 opposite.
 
 =back
+
+=head1 Predicate Values
+
+An explicitly specified predicate value is a hash reference that contains
+one of the following three keys with their appropriate values:
+
+=over 4
+
+=item 'cb' => \&predicate_func
+
+This specifies a sub-routine reference (or "callback" or "cb"), that will be
+called to determine the result of the predicate. It accepts two named arguments
+- C<'path_info'> which is the path of the current page (without the leading
+slash) and C<'current_host'> which is the ID of the current host.
+
+Here is an example for such a callback:
+
+    sub predicate_cb1
+    {
+        my %args = (@_);
+        my $host = $args{'current_host'};
+        my $path = $args{'path_info'};
+        return (($host eq "true") && ($path eq "mypath/"));
+    }
+
+=item 're' => $regexp_string
+
+This specifies a regular expression to be matched against the path_info
+(regardless of what current_host is), to determine the result of the 
+predicate.
+
+=item 'bool' => [ 0 | 1 ]
+
+This specifies the constant boolean value of the predicate.
+
+=back
+
+Note that if C<'cb'> is specified then both C<'re'> and C<'bool'> will
+be ignored, and C<'re'> over-rides C<'bool'>. 
+
+If the predicate is not a hash reference, then HTML::Widgets::NavMenu will
+try to guess what it is. If it's a sub-routine reference, it will be an
+implicit callback. If it's one of the values C<"0">, C<"1">, C<"yes">, 
+C<"no">, C<"true">, C<"false">, C<"True">, C<"False"> it will be considered
+a boolean. If it's a different string, a regular expression match will
+be attempted. Else, an excpetion will be thrown.
+
+Here are some examples for predicates:
+
+    # Always expand.
+    'expand' => { 'bool' => 1, };
+
+    # Never expand.
+    'expand' => { 'bool' => 0, };
+
+    # Expand under home/
+    'expand' => { 're' => "^home/" },
+
+    # Expand under home/ when the current host is "foo"
+    sub expand_path_home_host_foo
+    {
+        my %args = (@_);
+        my $host = $args{'current_host'};
+        my $path = $args{'path_info'};
+        return (($host eq "foo") && ($path =~ m!^home/!));
+    }
+
+    'expand' => { 'cb' => \&expand_path_home_host_foo, },
 
 =head1 The Leading Path Component Class
 
@@ -979,7 +1058,7 @@ The URL of the node within the host. (one given in its 'url' key).
 
 =item label
 
-The label of the node. (one given in its 'value' key). This is not
+The label of the node. (one given in its 'text' key). This is not
 SGML-escaped.
 
 =item title 
@@ -1045,6 +1124,3 @@ You can use, modify and distribute this module under the terms of the MIT X11
 license. ( L<http://www.opensource.org/licenses/mit-license.php> ).
 
 =cut
-
-1;
-
