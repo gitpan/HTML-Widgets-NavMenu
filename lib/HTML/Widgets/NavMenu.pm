@@ -4,7 +4,7 @@ use utf8;
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '0.1.12_00';
+our $VERSION = '0.1.13_00';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -685,12 +685,12 @@ HTML::Widgets::NavMenu - A Perl Module for Generating HTML Navigation Menus
         HTML::Widgets::NavMenu->new(
             'path_info' => "/me/",
             'current_host' => "default",
-            'hosts' => 
-            { 
-                'default' => 
-                { 
-                    'base_url' => "http://www.hello.com/" 
-                }, 
+            'hosts' =>
+            {
+                'default' =>
+                {
+                    'base_url' => "http://www.hello.com/"
+                },
             },
             'tree_contents' =>
             {
@@ -724,9 +724,307 @@ a complete site map, a path of leading components, and also keeps
 track of navigation links ("Next", "Prev", "Up", etc.) It's a little bit 
 scarse on documentation now, because it's still was not made ready for
 public consumption yet. You can start from the example above and see more
-examples in the tests, and complete working sites in the Subversion 
+examples in the tests, and complete working sites in the Subversion
 repositories at L<http://stalker.iguide.co.il:8080/svn/shlomif-homepage/>
 and L<http://opensvn.csie.org/perlbegin/perl-begin/>.
+
+To use this module call the constructor with the following named arguments:
+
+=over 4
+
+=item hosts
+
+This should be a hash reference that maps host-IDs to another hash reference
+that contains information about the hosts. An HTML::Widgets::NavMenu navigation
+menu can spread across pages in several hosts, which will link from one to
+another using relative URLs if possible and fully-qualified (i.e: C<http://>)
+URLs if not.
+
+Currently the only key present in the hash is the C<base_url> one that points
+to a string containing the absolute URL to the sub-site. The base URL may
+have trailing components if it does not reside on the domain's root directory.
+
+Here's an example for a minimal hosts value:
+
+            'hosts' =>
+            {
+                'default' =>
+                {
+                    'base_url' => "http://www.hello.com/"
+                },
+            },
+
+And here's a two-hosts value from my personal site, which is spread across
+two sites:
+
+    'hosts' =>
+    {
+        't2' => 
+        {
+            'base_url' => "http://www.shlomifish.org/",
+        },
+        'vipe' =>
+        {
+            'base_url' => "http://vipe.technion.ac.il/~shlomif/",
+        },
+    },
+
+=item current_host
+
+This parameter indicate which host-ID of the hosts in C<hosts> is the
+one that the page for which the navigation menu should be generated is. This
+is important so cross-site and inner-site URLs will be handled correctly.
+
+=item path_info
+
+This is the path relative to the host's C<base_url> of the currently displayed
+page. The path should start with a "/"-character, or otherwise a re-direction
+excpetion will be thrown (this is done to aid in using this module from within
+CGI scripts).
+
+=item tree_contents
+
+This item gives the complete tree for the navigation menu. It is a nested
+Perl data structure, whose syntax is fully explained in the section
+"The Input Tree of Contents".
+
+=item ul_classes
+
+This is an optional parameter whose value is a reference to an array that 
+indicates the values of the class="" arguments for the C<E<lt>ulE<gt>> tags 
+whose depthes are the indexes of the array.
+
+For example, assigning:
+
+    'ul_classes' => [ "FirstClass", "second myclass", "3C" ],
+
+Will assign "FirstClass" as the class of the top-most ULs, "second myclass"
+as the classes of the ULs inner to it, and "3C" as the class of the ULs inner
+to the latter ULs.
+
+If classes are undef, the UL tag will not contain a class parameter.
+
+=back
+
+A complete invocation of an HTML::Widgets::NavMenu constructor can be
+found in the SYNOPSIS above.
+
+After you initialize an instance of the navigation menu object, you need to
+get the results using the render function.
+
+=head2 $results = $nav_menu->render()
+
+render() should be called after a navigation menu object is constructed
+to prepare the results and return them. It returns a hash reference with the
+following keys:
+
+=over 4
+
+=item 'html'
+
+This key points to a reference to an array that contains the tags for the 
+HTML. One can join these tags to get the full HTML. It is possible to 
+delimit them with newlines, if one wishes the markup to be easier to read.
+
+=item 'leading_path'
+
+This is a reference to an array of leading path objects. These indicate the
+intermediate pages in the site that lead from the front page to the 
+current page. The methods supported by the class of these objects is described
+below under "The Leading Path Component Class".
+
+=item 'nav_links'
+
+This points to a hash reference whose keys are Mozilla-style link-toolbar
+( L<http://cdn.mozdev.org/linkToolbar/> ) link IDs and its values are the
+URLs to these links.
+
+This sample code renders the links as C<E<lt>link rel=...E<gt>> into the
+page header:
+
+    my $nav_links = $results->{'nav_links'};
+    # Sort the keys so their order will be preserved
+    my @keys = (sort { $a cmp $b } keys(%$nav_links));
+    foreach my $key (@keys)
+    {
+        my $url = $nav_links->{$key};
+        print {$fh} "<link rel=\"$key\" href=\"" .
+            CGI::escapeHTML($url) . "\" />\n";
+    }
+
+=back
+
+=head2 $text = $nav_menu->gen_site_map()
+
+This function can be called to generate a site map based on the tree of
+contents. It returns a scalar containing all the text of the site map.
+
+=head1 The Input Tree of Contents
+
+The input tree is a nested Perl data structure that represnets the tree
+of the site. Each node is respresented as a Perl hash reference, with its
+sub-nodes contained in an array reference of its C<'subs'> value. A 
+non-existent C<'subs'> means that the node is a leaf and has no sub-nodes.
+
+The top-most node is mostly a dummy node, that just serves as the father
+of all other nodes.
+
+Following is a listing of the possible values inside a node hash and what
+their respective values mean.
+
+=over 4
+
+=item 'host'
+
+This is the host-ID of the host as found in the C<'hosts'> key to the 
+navigation menu object constructor. It implicitly propagates downwards in the 
+tree. (i.e: all nodes of the sub-tree spanning from the node will implicitly
+have it as their value by default.)
+
+Generally, a host must always be specified and so the first node should
+specify it.
+
+=item 'url'
+
+This contains the URL of the node within the host. The URL should not
+contain a leading slash. This value does not propagate further.
+
+The URL should be specified for every nodes except separators and the such.
+
+=item 'value'
+
+This is the text that will be presented to the user as the text of the 
+link inside the navigation bar. E.g.: if C<'value'> is "Hi There", then the
+link will look something like this:
+
+    <a href="my-url/">Hi There</a>
+
+Or
+
+    <b>Hi There</b>
+
+if it's the current page. Not that this text is rendered into HTML
+as is, and so should be escaped to prevent HTML-injection attacks.
+
+=item 'title'
+
+This is the text of the link tag's title attribute. It is also not
+processed and so the user of the module, should make sure it is escaped
+if needed, to prevent HTML-injection attacks. It is optional, and if not
+specified, no title will be presented.
+
+=item 'subs'
+
+This item, if specified, should point to an array reference containing the
+sub-nodes of this item, in order.
+
+=item 'separator'
+
+This key if specified and true indicate that the item is a separator, which
+should just leave a blank line in the HTML. It is best to accompany it with
+C<'skip'> (see below).
+
+If C<'separator'> is specified, it is usually meaningless to specify all 
+other node keys except C<'skip'>.
+
+=item 'skip'
+
+This key if true, indicates that the node should be skipped when traversing 
+site using the Mozilla navigation links. Instead the navigation will move
+to the next or previous nodes.
+
+=item 'hide'
+
+This key if true indicates that the item should be part of the site's flow
+and site map, but not displayed in the navigation menu.
+
+=item 'role'
+
+This indicates a role of an item. It is similar to a CSS class, or to 
+DocBook's "role" attribute, only induces different HTML markup. The vanilla
+HTML::Widgets::NavMenu does not distinguish between any roles, but see
+L<HTML::Widgets::NavMenu::HeaderRole>.
+
+=item 'expand_re'
+
+This specifies a regular expression to be matched against the path to determine
+if the navigation menu should be expanded at this node. If it does, all of 
+the nodes up to it will expand as well.
+
+=item 'show_always'
+
+This value if true, indicates that the node and all nodes below it (until
+'show_always' is explicitly set to false) must be always displayed. Its 
+function is similar to C<'expand_re'> but its propagation semantics the 
+opposite.
+
+=back
+
+=head1 The Leading Path Component Class
+
+When retrieving the leading path, an array of objects is returned. This section
+describes the class of these objects, so one will know how to use them.
+
+Basically, it is an object that has several accessors. The accessors are:
+
+=over 4
+
+=item host
+
+The host ID of this node.
+
+=item host_url
+
+The URL of the node within the host. (one given in its 'url' key).
+
+=item label
+
+The label of the node. (one given in its 'value' key). This is not
+SGML-escaped.
+
+=item title 
+
+The title of the node. (that can be assigned to the URL 'title' attribute).
+This is not SGML-escaped.
+
+=item direct_url
+
+A direct URL (usable for inclusion in an A tag ) from the current page to this
+page.
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<HTML::Widgets::NavMenu::HeaderRole>
+
+An HTML::Widgets::NavMenu sub-class that contains support for another 
+role. Used for the navigation menu in L<http://perl-begin.berlios.de/>.
+
+=item L<HTML::Widget::SideBar>
+
+A module written by Yosef Meller for maintaining a navigation menu. 
+HTML::Widgets::NavMenu originally utilized, but it no longer does. This module
+does not makes links relative on its own, and tends to generate a lot of 
+JavaScript code by default. It also does not have too many automated test
+scripts.
+
+=item L<HTML::Menu::Hierarchical>
+
+A module by Don Owens for generating hierarchical HTML menus. I could not 
+quite understand its tree traversal semantics, so I ended up not using it. Also
+seems to require that each of the tree node will have a unique ID.
+
+=item L<HTML::Widgets::Menu>
+
+This module also generates a navigation menu. The CPAN version is relatively
+old, and the author sent me a newer version. After playing with it a bit, I
+realized that I could not get it to do what I want (but I cannot recall
+why), so I abandoned it.
+
+=back
 
 =head1 AUTHORS
 
@@ -738,6 +1036,13 @@ Shlomi Fish E<lt>shlomif@iglu.org.ilE<gt>
 Thanks to Yosef Meller (L<http://search.cpan.org/~yosefm/>) for writing
 the module HTML::Widget::SideBar on which initial versions of this modules
 were based. (albeit his code is no longer used here).
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2004, Shlomi Fish. All rights reserved.
+
+You can use, modify and distribute this module under the terms of the MIT X11
+license. ( L<http://www.opensource.org/licenses/mit-license.php> ).
 
 =cut
 
