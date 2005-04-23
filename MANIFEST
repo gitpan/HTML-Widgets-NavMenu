@@ -1,3 +1,4 @@
+Build.PL
 Changes
 COPYING
 Makefile.PL
@@ -19,6 +20,8 @@ t/10ul-classes.t
 t/11predicate.t
 t/12x-host-rel-url.t
 t/13escape-html.t
+t/14tag-gen.t
+t/15aspetersen-inherit.t
 lib/HTML/Widgets/NavMenu/EscapeHtml.pm
 lib/HTML/Widgets/NavMenu/HeaderRole.pm
 lib/HTML/Widgets/NavMenu/Iterator/Base.pm
@@ -29,6 +32,7 @@ lib/HTML/Widgets/NavMenu/Iterator/SiteMap.pm
 lib/HTML/Widgets/NavMenu/Object.pm
 lib/HTML/Widgets/NavMenu.pm
 lib/HTML/Widgets/NavMenu/Predicate.pm
+lib/HTML/Widgets/NavMenu/TagGen.pm
 lib/HTML/Widgets/NavMenu/Tree/Iterator/Item.pm
 lib/HTML/Widgets/NavMenu/Tree/Iterator.pm
 lib/HTML/Widgets/NavMenu/Tree/Iterator/Stack.pm

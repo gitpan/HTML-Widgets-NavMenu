@@ -7,7 +7,6 @@ use Test::More tests => 6;
 use HTML::Widgets::NavMenu;
 
 use HTML::Widgets::NavMenu::Test::Data;
-use HTML::Widgets::NavMenu::Test::Util;
 
 my $test_data = get_test_data();
 
@@ -15,12 +14,13 @@ sub validate_site_map
 {
     my $results = shift;
     my $expected_string = shift;
+    my $test_blurb = shift;
     
     my @result = @$results;
 
     my @expected = (split(/\n/, $expected_string));
 
-    return (compare_string_arrays(\@expected, \@result) == 0);
+    is_deeply(\@expected, \@result, $test_blurb);
 }
 
 {
@@ -42,8 +42,7 @@ sub validate_site_map
 EOF
 
     # TEST
-    ok (validate_site_map($results, $expected_text), 
-        "site_map #1");
+    validate_site_map($results, $expected_text, "site_map #1");
 }
 
 {
@@ -98,8 +97,7 @@ EOF
 </ul>
 EOF
     # TEST
-    ok (validate_site_map($results, $expected_text), 
-        "site_map #2");
+    validate_site_map($results, $expected_text, "site_map #2");
 }
 
 {
@@ -147,8 +145,7 @@ EOF
 </ul>
 EOF
     # TEST
-    ok (validate_site_map($results, $expected_text),
-        "site_map - complex");
+    validate_site_map($results, $expected_text, "site_map - complex");
 }
 
 # Now testing that the separator is safely skipped and does not generate
@@ -203,8 +200,7 @@ EOF
 </ul>
 EOF
     # TEST
-    ok (validate_site_map($results, $expected_text), 
-        "site_map - separator");
+    validate_site_map($results, $expected_text, "site_map - separator");
 }
 
 # This is a test for the rec_url_type directive.
@@ -239,8 +235,7 @@ EOF
 </ul>
 EOF
     # TEST
-    ok (validate_site_map($results, $expected_text), 
-        "site_map - rec_url_type");
+    validate_site_map($results, $expected_text, "site_map - rec_url_type");
 }
 
 
@@ -274,6 +269,5 @@ EOF
 </ul>
 EOF
     # TEST
-    ok (validate_site_map($results, $expected_text), 
-        "site_map - url_is_abs");
+    validate_site_map($results, $expected_text, "site_map - url_is_abs");
 }

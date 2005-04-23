@@ -116,8 +116,6 @@ use Test::More tests => 4;
 
 use strict;
 
-use HTML::Widgets::NavMenu::Test::Util;
-
 sub test_traverse
 {
     my ($data, $expected, $test_name, $class) = (@_);
@@ -129,8 +127,7 @@ sub test_traverse
 
     $traverser->traverse();
 
-    ok ((compare_string_arrays($traverser->{'results'}, $expected) == 0),
-        $test_name);
+    is_deeply($traverser->{'results'}, $expected, $test_name);
 }
 
 {

@@ -2,7 +2,7 @@
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '0.6.0';
+our $VERSION = '0.8.0';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -28,7 +28,7 @@ sub CGIpm_perform_redirect
     exit;
 }
 
-package HTML::Widgets::NavMenu::LeadingPath::Component;
+package HTML::Widgets::NavMenu::NodeDescription;
 
 use strict;
 
@@ -54,6 +54,12 @@ sub initialize
 }
 
 1;
+
+package HTML::Widgets::NavMenu::LeadingPath::Component;
+
+use vars qw(@ISA);
+
+@ISA = (qw(HTML::Widgets::NavMenu::NodeDescription));
 
 package HTML::Widgets::NavMenu::Iterator::GetCurrentlyActive;
 
@@ -669,9 +675,11 @@ sub gen_traversed_tree
     return {'tree' => $tree, 'current_coords' => $current_coords };
 }
 
-sub get_leading_path
+sub get_leading_path_of_coords
 {
     my $self = shift;
+
+    my (%args) = (@_);
     
     my @leading_path;
 
@@ -706,12 +714,20 @@ sub get_leading_path
             };
 
         $iterator->find_node_by_coords(
-            $self->get_current_coords(),
+            $args{'coords'},
             $fill_leading_path_callback,
             );
     }
 
     return \@leading_path;
+}
+
+sub get_leading_path
+{
+    my $self = shift;
+    return $self->get_leading_path_of_coords(
+        'coords' => $self->get_current_coords()
+    );
 }
 
 sub render
@@ -727,6 +743,7 @@ sub render
     my $hosts = $self->{hosts};
 
     my %nav_links;
+    my %nav_links_obj;
 
     my %links_proto = 
         (
@@ -748,7 +765,13 @@ sub render
         }
         if (defined($coords))
         {
-            $nav_links{$link_rel} = $self->get_rel_url_from_coords($coords);
+            my $obj = 
+                $self->get_leading_path_of_coords(
+                    'coords' => $coords
+                )->[-1];
+            
+            $nav_links_obj{$link_rel} = $obj;
+            $nav_links{$link_rel} = $obj->direct_url();
         }
     }
 
@@ -759,6 +782,7 @@ sub render
             'html' => $html,
             'leading_path' => $self->get_leading_path(),
             'nav_links' => \%nav_links,
+            'nav_links_obj' => \%nav_links_obj,
         };
 }
 
@@ -928,16 +952,38 @@ delimit them with newlines, if one wishes the markup to be easier to read.
 
 =item 'leading_path'
 
-This is a reference to an array of leading path objects. These indicate the
+This is a reference to an array of node description objects. These indicate the
 intermediate pages in the site that lead from the front page to the 
 current page. The methods supported by the class of these objects is described
-below under "The Leading Path Component Class".
+below under "The Node Description Component Class".
+
+=item 'nav_links_obj'
+
+This points to a hash reference whose keys are Mozilla-style link-toolbar
+( L<http://cdn.mozdev.org/linkToolbar/> ) link IDs and its values are Node
+Description objects. (see "The Node Description Class" below). Here's a 
+sample code that renders the links as C<E<lt>link rel=...E<gt>> into the
+page header:
+
+
+    my $nav_links = $results->{'nav_links_obj'};
+    # Sort the keys so their order will be preserved
+    my @keys = (sort { $a cmp $b } keys(%$nav_links));
+    foreach my $key (@keys)
+    {
+        my $value = $nav_links->{$key};
+        my $url = CGI:escapeHTML($value->direct_url());
+        my $title = CGI::escapeHTML($value->title());
+        print {$fh} "<link rel=\"$key\" href=\"$url\" title=\"$title\" />\n";
+    }
 
 =item 'nav_links'
 
 This points to a hash reference whose keys are Mozilla-style link-toolbar
 ( L<http://cdn.mozdev.org/linkToolbar/> ) link IDs and its values are the
-URLs to these links.
+URLs to these links. This key/value pair is provided for backwards 
+compatibility with older versions of HTML::Widgets::NavMenu. In new code,
+one is recommended to use C<'nav_links_obj'> instead.
 
 This sample code renders the links as C<E<lt>link rel=...E<gt>> into the
 page header:
@@ -959,6 +1005,31 @@ page header:
 This function can be called to generate a site map based on the tree of
 contents. It returns a reference to an array containing the tags of the 
 site map.
+
+=head2 $url = $nav_menu->get_cross_host_rel_url(...)
+
+This function can be called to calculate a URL to a different part of the
+site. It accepts four named arguments:
+
+=over 8
+
+=item 'host'
+
+This is the host ID
+
+=item 'host_url'
+
+This is URL within the host.
+
+=item 'url_type'
+
+C<'rel'>, C<'full_abs'> or C<'site_abs'>.
+
+=item 'url_is_abs'
+
+A flag that indicates if C<'host_url'> is already absolute.
+
+=back
 
 =head1 The Input Tree of Contents
 
@@ -1163,10 +1234,11 @@ Here are some examples for predicates:
 
     'expand' => { 'cb' => \&expand_path_home_host_foo, },
 
-=head1 The Leading Path Component Class
+=head1 The Node Description Class
 
-When retrieving the leading path, an array of objects is returned. This section
-describes the class of these objects, so one will know how to use them.
+When retrieving the leading path or the C<nav_links_obj>, an array of objects 
+is returned. This section describes the class of these objects, so one will 
+know how to use them.
 
 Basically, it is an object that has several accessors. The accessors are:
 
@@ -1213,7 +1285,7 @@ role. Used for the navigation menu in L<http://perl-begin.berlios.de/>.
 =item L<HTML::Widget::SideBar>
 
 A module written by Yosef Meller for maintaining a navigation menu. 
-HTML::Widgets::NavMenu originally utilized, but it no longer does. This module
+HTML::Widgets::NavMenu originally utilized it, but no longer does. This module
 does not makes links relative on its own, and tends to generate a lot of 
 JavaScript code by default. It also does not have too many automated test
 scripts.

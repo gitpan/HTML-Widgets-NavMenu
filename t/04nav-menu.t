@@ -8,20 +8,20 @@ use HTML::Widgets::NavMenu;
 use HTML::Widgets::NavMenu::HeaderRole;
 
 use HTML::Widgets::NavMenu::Test::Data;
-use HTML::Widgets::NavMenu::Test::Util;
 
 my $test_data = get_test_data();
 
-sub validate_nav_menu
+sub test_nav_menu
 {
     my $rendered = shift;
     my $expected_string = shift;
+    my $test_blurb = shift;
     
     my @result = (@{$rendered->{html}});
 
     my @expected = (split(/\n/, $expected_string));
 
-    return (compare_string_arrays(\@expected, \@result) == 0);
+    is_deeply (\@expected, \@result, $test_blurb);
 }
 
 {
@@ -46,8 +46,7 @@ sub validate_nav_menu
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu for minimal - 1"); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu for minimal - 1"); 
 }
 
 
@@ -85,8 +84,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu for minimal - 2"); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu for minimal - 2"); 
 }
 
 # This test tests that an expand_re directive should not cause
@@ -123,8 +121,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu for expand_re"); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu for expand_re"); 
 }
 
 # This test tests that an empty expand_re directive works after a successful
@@ -162,8 +159,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string),
-        "Nav Menu for empty expand_re after successful pattern match");
+    test_nav_menu($rendered, $expected_string, "Nav Menu for empty expand_re after successful pattern match");
 }
 
 # This test tests the show_always directive which causes the entire
@@ -217,8 +213,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string),
-        "Nav Menu with show_always");
+    test_nav_menu($rendered, $expected_string, "Nav Menu with show_always");
 }
 
 # This test tests a menu auto-expands if the current URL is an item
@@ -257,8 +252,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string),
-        "Nav Menu with a selected sub-item");
+    test_nav_menu($rendered, $expected_string, "Nav Menu with a selected sub-item");
 }
 
 {
@@ -302,8 +296,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu with Separators"); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu with Separators"); 
 }
 
 {
@@ -337,8 +330,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu with Hidden Item"); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu with Hidden Item"); 
 }
 
 
@@ -372,8 +364,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu with a role of \"header\""); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu with a role of \"header\""); 
 }
 
 {
@@ -406,8 +397,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu with a selected item with a role of \"header\" "); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu with a selected item with a role of \"header\" "); 
 }
 
 # Test the selective expand. (test #1)
@@ -451,8 +441,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Selective Expand Nav-Menu #1"); 
+    test_nav_menu($rendered, $expected_string, "Selective Expand Nav-Menu #1"); 
 }
 
 # Test the selective expand. (test #2)
@@ -493,8 +482,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Selective Expand Nav-Menu #2"); 
+    test_nav_menu($rendered, $expected_string, "Selective Expand Nav-Menu #2"); 
 }
 
 # This is a test for the url_type directive.
@@ -522,8 +510,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu for url_type - 1"); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu for url_type - 1"); 
 }
 
 # This is a test for the rec_url_type directive.
@@ -562,8 +549,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu for rec_url_type - 1"); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu for rec_url_type - 1"); 
 }
 
 # Test the url_is_abs directive
@@ -588,8 +574,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu for url_is_asb - 1"); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu for url_is_asb - 1"); 
 }
 
 {
@@ -633,8 +618,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Mixed Expand Nav-Menu #1"); 
+    test_nav_menu($rendered, $expected_string, "Mixed Expand Nav-Menu #1"); 
 }
 
 
@@ -667,8 +651,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Mixed Expand Nav-Menu #2"); 
+    test_nav_menu($rendered, $expected_string, "Mixed Expand Nav-Menu #2"); 
 }
 
 {
@@ -709,8 +692,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Mixed Expand Nav-Menu #3"); 
+    test_nav_menu($rendered, $expected_string, "Mixed Expand Nav-Menu #3"); 
 }
 
 {
@@ -738,8 +720,7 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Special Chars Nav Menu"); 
+    test_nav_menu($rendered, $expected_string, "Special Chars Nav Menu"); 
 }
 
 # Test a special chars-based URL.
@@ -768,6 +749,5 @@ EOF
 EOF
 
     # TEST
-    ok (validate_nav_menu($rendered, $expected_string), 
-        "Nav Menu with a special chars URL."); 
+    test_nav_menu($rendered, $expected_string, "Nav Menu with a special chars URL."); 
 }

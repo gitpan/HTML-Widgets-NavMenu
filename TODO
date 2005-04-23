@@ -1,8 +1,6 @@
 Long-Term:
 ----------
 
-* Use Build.PL instead of Makefile.PL. (?)
-
 * Make the module support URLs with CGI GET parameters properly.
 
 * Add support for more attributes other than class="" to the ul and li
