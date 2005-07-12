@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 20;
+use Test::More tests => 23;
 
 use HTML::Widgets::NavMenu;
 use HTML::Widgets::NavMenu::HeaderRole;
@@ -21,7 +21,7 @@ sub test_nav_menu
 
     my @expected = (split(/\n/, $expected_string));
 
-    is_deeply (\@expected, \@result, $test_blurb);
+    is_deeply (\@result, \@expected, $test_blurb);
 }
 
 {
@@ -360,10 +360,19 @@ EOF
 <li>
 <a href="../me/sub-me-two/">Sub Me 2</a>
 </li>
+<li>
+<a href="../aloha/">Hello</a>
+<br />
+<ul class="navbarnested">
+<li>
+<a href="../aloha/obkb/">OBKB</a>
+</li>
+</ul>
+</li>
 </ul>
 EOF
 
-    # TEST
+    # TESTbr 
     test_nav_menu($rendered, $expected_string, "Nav Menu with a role of \"header\""); 
 }
 
@@ -392,6 +401,15 @@ EOF
 </li>
 <li>
 <a href="sub-me-two/">Sub Me 2</a>
+</li>
+<li>
+<a href="../aloha/">Hello</a>
+<br />
+<ul class="navbarnested">
+<li>
+<a href="../aloha/obkb/">OBKB</a>
+</li>
+</ul>
 </li>
 </ul>
 EOF
@@ -750,4 +768,85 @@ EOF
 
     # TEST
     test_nav_menu($rendered, $expected_string, "Nav Menu with a special chars URL."); 
+}
+
+# Test a special chars-based URL.
+{
+    my %args = (@{$test_data->{'special_chars_menu'}});
+    delete($args{'current_host'});
+    eval {
+    my $nav_menu = HTML::Widgets::NavMenu->new(
+        'path_info' => "/<hello>&\"you\"/",
+        %args,
+    );
+    };
+
+    # TEST
+    like ($@, qr!^Current host!,
+        "Checking for exception");
+}
+
+# This is to test that the cb2 is working properly.
+{
+    my $nav_menu = HTML::Widgets::NavMenu->new(
+        'path_info' => "/me/not-exist/",
+        @{$test_data->{'mixed_expand_menu'}},
+        'current_host' => "other",
+        'ul_classes' => [ "one", "two", "three" ],
+    );
+
+    my $rendered =
+        $nav_menu->render();
+
+    my $expected_string = <<"EOF";
+<ul class="one">
+<li>
+<a href="http://www.default.net/">Home</a>
+</li>
+<li>
+<a href="http://www.default.net/me/" title="About Myself">About Me</a>
+</li>
+<li>
+<a href="http://www.default.net/halifax/">Halifax</a>
+</li>
+<li>
+<a href="../../open-source/" title="Open Source Software I Wrote">Software</a>
+</li>
+</ul>
+EOF
+
+    # TEST
+    test_nav_menu($rendered, $expected_string, "Mixed Expand Nav-Menu #4"); 
+}
+
+{
+    my $nav_menu = HTML::Widgets::NavMenu->new(
+        'path_info' => "/open-source/",
+        @{$test_data->{'mixed_expand_menu'}},
+        'current_host' => "default",
+        'ul_classes' => [ "one", "two", "three" ],
+    );
+
+    my $rendered =
+        $nav_menu->render();
+
+    my $expected_string = <<"EOF";
+<ul class="one">
+<li>
+<a href="../">Home</a>
+</li>
+<li>
+<a href="../me/" title="About Myself">About Me</a>
+</li>
+<li>
+<a href="../halifax/">Halifax</a>
+</li>
+<li>
+<a href="http://www.other.org/open-source/" title="Open Source Software I Wrote">Software</a>
+</li>
+</ul>
+EOF
+
+    # TEST
+    test_nav_menu($rendered, $expected_string, "Mixed Expand Nav-Menu #5"); 
 }

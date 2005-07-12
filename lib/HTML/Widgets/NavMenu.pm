@@ -2,7 +2,7 @@
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '0.8.0';
+our $VERSION = '0.10.0';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -180,7 +180,8 @@ sub initialize
     $self->{hosts} = $args{hosts};
     $self->{tree_contents} = $args{tree_contents};
 
-    my $current_host = $args{current_host} || "";
+    my $current_host = $args{current_host} 
+        or die "Current host was not specified.";
 
     $self->{current_host} = $current_host;
 
@@ -501,13 +502,9 @@ sub get_prev_coords
 
         return $new_coords;
     }
-    elsif (scalar(@coords) > 0)
-    {
-        return [ @coords[0 .. ($#coords-1)] ];
-    }
     else
     {
-        return undef;
+        return [ @coords[0 .. ($#coords-1)] ];
     }
 }
 
@@ -567,7 +564,11 @@ sub get_coords_while_skipping_skips
     my $self = shift;
 
     my $callback = shift;
-    my $coords = shift || $self->get_current_coords();
+    my $coords = shift(@_);
+    if (!$coords)
+    {
+        $coords = $self->get_current_coords();
+    }
 
     my $do_once = 1;
 
@@ -615,6 +616,7 @@ sub get_most_advanced_leaf
     return \@coords;
 }
 
+=for nothing
 sub get_rel_url_from_coords
 {
     my $self = shift;
@@ -627,6 +629,7 @@ sub get_rel_url_from_coords
 
     return $self->get_url_to_item('item' => $item);
 }
+=cut
 
 # The traversed_tree is the tree that is calculated from the tree given
 # by the user and some other parameters such as the host and path_info.
@@ -972,7 +975,7 @@ page header:
     foreach my $key (@keys)
     {
         my $value = $nav_links->{$key};
-        my $url = CGI:escapeHTML($value->direct_url());
+        my $url = CGI::escapeHTML($value->direct_url());
         my $title = CGI::escapeHTML($value->title());
         print {$fh} "<link rel=\"$key\" href=\"$url\" title=\"$title\" />\n";
     }
