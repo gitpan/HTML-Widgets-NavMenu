@@ -2,7 +2,7 @@
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '0.10.2';
+our $VERSION = '1.0000';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -100,6 +100,13 @@ sub item_matches
         );
 }
 
+sub does_item_expand
+{
+    my $self = shift;
+    my $item = $self->top();
+    return $item->node()->expanded();
+}
+
 sub node_start
 {
     my $self = shift;
@@ -111,6 +118,11 @@ sub node_start
         $self->{'temp_coords'} = [ @coords, (-1) ];
         $self->top()->node()->mark_as_current();
         $self->{'item_found'} = 1;
+    }
+    elsif ($self->does_item_expand())
+    {
+        my @coords = @{$self->get_coords()};
+        $self->{'leading_path_coords'} = [ @coords];
     }
 }
 
@@ -145,6 +157,13 @@ sub get_final_coords
     my $self = shift;
 
     return $self->{'ret_coords'};
+}
+
+sub get_leading_path_coords
+{
+    my $self = shift;
+
+    return ($self->{'ret_coords'} || $self->{'leading_path_coords'});
 }
 
 package HTML::Widgets::NavMenu;
@@ -616,7 +635,8 @@ sub get_most_advanced_leaf
     return \@coords;
 }
 
-=for nothing
+=begin comment
+
 sub get_rel_url_from_coords
 {
     my $self = shift;
@@ -629,6 +649,9 @@ sub get_rel_url_from_coords
 
     return $self->get_url_to_item('item' => $item);
 }
+
+=end comment
+
 =cut
 
 # The traversed_tree is the tree that is calculated from the tree given
@@ -643,6 +666,7 @@ sub get_traversed_tree
         my $gen_retval = $self->gen_traversed_tree();
         $self->{'traversed_tree'} = $gen_retval->{'tree'};
         $self->{'current_coords'} = $gen_retval->{'current_coords'};
+        $self->{'leading_path_coords'} = $gen_retval->{'leading_path_coords'};
     }
     return $self->{'traversed_tree'};
 }
@@ -650,8 +674,6 @@ sub get_traversed_tree
 sub gen_traversed_tree
 {
     my $self = shift;
-
-    my $current_coords = [];
 
     my $tree = 
         $self->render_tree_contents(
@@ -666,7 +688,9 @@ sub gen_traversed_tree
 
     $find_coords_iterator->traverse();
 
-    $current_coords = $find_coords_iterator->get_final_coords() || [];
+    my $current_coords = $find_coords_iterator->get_final_coords() || [];
+    my $leading_path_coords = 
+        $find_coords_iterator->get_leading_path_coords() || [];
 
     # The root should always be expanded because:
     # 1. If one of the leafs was marked as expanded so will its ancestors
@@ -675,7 +699,12 @@ sub gen_traversed_tree
     #    expanded so it will expand.
     $tree->expand();
    
-    return {'tree' => $tree, 'current_coords' => $current_coords };
+    return 
+        {
+            'tree' => $tree, 
+            'current_coords' => $current_coords, 
+            'leading_path_coords' => $leading_path_coords,
+        };
 }
 
 sub get_leading_path_of_coords
@@ -724,12 +753,17 @@ sub get_leading_path_of_coords
 
     return \@leading_path;
 }
+sub get_leading_path_coords
+{
+    my $self = shift;
+    return $self->{'leading_path_coords'};
+}
 
 sub get_leading_path
 {
     my $self = shift;
     return $self->get_leading_path_of_coords(
-        'coords' => $self->get_current_coords()
+        'coords' => $self->get_leading_path_coords()
     );
 }
 
@@ -1277,6 +1311,11 @@ This is the C<url_type> (see above) that holds for this node.
 =back
 
 =head1 SEE ALSO
+
+See the article Shlomi Fish wrote for Perl.com for a gentle introduction to
+HTML-Widgets-NavMenu:
+
+L<http://www.perl.com/pub/a/2005/07/07/navwidgets.html>
 
 =over 4
 
