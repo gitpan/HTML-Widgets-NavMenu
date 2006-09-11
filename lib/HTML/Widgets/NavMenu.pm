@@ -1,12 +1,11 @@
-#!/usr/bin/perl -w
+use strict;
+use warnings;
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '1.0000';
+our $VERSION = '1.0001';
 
 package HTML::Widgets::NavMenu::Error;
-
-use strict;
 
 use Error qw(:try);
 
@@ -39,7 +38,7 @@ __PACKAGE__->mk_accessors(
     qw(host host_url title label direct_url url_type)
     );
 
-sub initialize
+sub _init
 {
     my $self = shift;
 
@@ -65,13 +64,13 @@ package HTML::Widgets::NavMenu::Iterator::GetCurrentlyActive;
 
 use base 'HTML::Widgets::NavMenu::Iterator::Base';
 
-sub initialize
+sub _init
 {
     my $self = shift;
 
     my %args = (@_);
 
-    $self->SUPER::initialize(@_);
+    $self->SUPER::_init(@_);
 
     $self->{'tree'} = $args{'tree'};
 
@@ -91,11 +90,11 @@ sub item_matches
 {
     my $self = shift;
     my $item = $self->top();
-    my $url = $item->node()->url();
+    my $url = $item->_node()->url();
     my $nav_menu = $self->nav_menu();
     return
         (
-            ($item->accum_state()->{'host'} eq $nav_menu->current_host()) &&
+            ($item->_accum_state()->{'host'} eq $nav_menu->current_host()) &&
             (defined($url) && ($url eq $nav_menu->path_info()))
         );
 }
@@ -104,7 +103,7 @@ sub does_item_expand
 {
     my $self = shift;
     my $item = $self->top();
-    return $item->node()->expanded();
+    return $item->_node()->expanded();
 }
 
 sub node_start
@@ -116,7 +115,7 @@ sub node_start
         my @coords = @{$self->get_coords()};
         $self->{'ret_coords'} = [ @coords ];
         $self->{'temp_coords'} = [ @coords, (-1) ];
-        $self->top()->node()->mark_as_current();
+        $self->top()->_node()->mark_as_current();
         $self->{'item_found'} = 1;
     }
     elsif ($self->does_item_expand())
@@ -136,7 +135,7 @@ sub node_end
         my $idx = pop(@{$self->{'temp_coords'}});
         if ($idx >= 0)
         {
-            my $node = $self->top()->node();
+            my $node = $self->top()->_node();
             $node->update_based_on_sub(
                 $node->get_nth_sub(
                     $idx
@@ -159,7 +158,7 @@ sub get_final_coords
     return $self->{'ret_coords'};
 }
 
-sub get_leading_path_coords
+sub _get_leading_path_coords
 {
     my $self = shift;
 
@@ -184,11 +183,11 @@ sub new
     my $class = shift;
     my $self = {};
     bless $self, $class;
-    $self->initialize(@_);
+    $self->_init(@_);
     return $self;
 }
 
-sub initialize
+sub _init
 {
     my $self = shift;
 
@@ -209,7 +208,7 @@ sub initialize
     return 0;
 }
 
-sub get_nav_menu_traverser_args
+sub _get_nav_menu_traverser_args
 {
     my $self = shift;
 
@@ -217,22 +216,22 @@ sub get_nav_menu_traverser_args
             'ul_classes' => $self->{'ul_classes'});
 }
 
-sub get_nav_menu_traverser
+sub _get_nav_menu_traverser
 {
     my $self = shift;
 
     return
         HTML::Widgets::NavMenu::Iterator::NavMenu->new(
-            $self->get_nav_menu_traverser_args()
+            $self->_get_nav_menu_traverser_args()
         );
 }
 
-sub get_current_coords
+sub _get_current_coords
 {
     my $self = shift;
 
     # This is to make sure $self->{current_coords} is generated.
-    $self->get_traversed_tree();
+    $self->_get_traversed_tree();
 
     return [ @{$self->{current_coords}} ];
 }
@@ -270,35 +269,35 @@ sub _register_path_info
     return 0;
 }
 
-sub is_slash_terminated
+sub _is_slash_terminated
 {
     my $string = shift;
     return (($string =~ /\/$/) ? 1 : 0);
 }
 
-sub text_to_url_obj
+sub _text_to_url_obj
 {
     my $text = shift;
     my $url = 
         HTML::Widgets::NavMenu::Url->new(
             $text,
-            (is_slash_terminated($text) || ($text eq "")),
+            (_is_slash_terminated($text) || ($text eq "")),
             "server",
         );
     return $url;
 }
 
-sub get_relative_url
+sub _get_relative_url
 {
     my $from_text = shift;
     my $to_text = shift(@_);
 
-    my $from_url = text_to_url_obj($from_text);
-    my $to_url = text_to_url_obj($to_text);
+    my $from_url = _text_to_url_obj($from_text);
+    my $to_url = _text_to_url_obj($to_text);
     my $ret = 
-        $from_url->get_relative_url(
+        $from_url->_get_relative_url(
             $to_url, 
-            is_slash_terminated($from_text)
+            _is_slash_terminated($from_text)
         );
    return $ret;
 }
@@ -315,7 +314,7 @@ sub current_host
     return $self->{'current_host'};
 }
 
-sub get_full_abs_url
+sub _get_full_abs_url
 {
     my $self = shift;
     my %args = (@_);
@@ -340,11 +339,11 @@ sub get_cross_host_rel_url
     }
     elsif (($host ne $self->current_host()) || ($url_type eq "full_abs"))
     {
-        return $self->get_full_abs_url(@_);
+        return $self->_get_full_abs_url(@_);
     }
     elsif ($url_type eq "rel")
     {
-        return get_relative_url($self->path_info(), $host_url);
+        return _get_relative_url($self->path_info(), $host_url);
     }
     elsif ($url_type eq "site_abs")
     {
@@ -356,28 +355,28 @@ sub get_cross_host_rel_url
     }
 }
 
-sub get_url_to_item
+sub _get_url_to_item
 {
     my $self = shift;
     my (%args) = (@_);
     my $item = $args{'item'};
 
     return $self->get_cross_host_rel_url(
-        'host' => $item->accum_state()->{'host'},
-        'host_url' => ($item->node->url() || ""),
+        'host' => $item->_accum_state()->{'host'},
+        'host_url' => ($item->_node->url() || ""),
         'url_type' => $item->get_url_type(),
-        'url_is_abs' => $item->node->url_is_abs(),
+        'url_is_abs' => $item->_node->url_is_abs(),
     );
 }
 
-sub gen_blank_nav_menu_tree_node
+sub _gen_blank_nav_menu_tree_node
 {
     my $self = shift;
 
     return HTML::Widgets::NavMenu::Tree::Node->new();
 }
 
-sub create_predicate
+sub _create_predicate
 {
     my $self = shift;
     my %args = (@_);
@@ -388,20 +387,20 @@ sub create_predicate
         );
 }
 
-sub create_new_nav_menu_item
+sub _create_new_nav_menu_item
 {
     my $self = shift;
     my %args = (@_);
 
     my $sub_contents = $args{sub_contents};
 
-    my $new_item = $self->gen_blank_nav_menu_tree_node();
+    my $new_item = $self->_gen_blank_nav_menu_tree_node();
 
     $new_item->set_values_from_hash_ref($sub_contents);
 
     if (exists($sub_contents->{'expand'}))
     {
-        if ($self->create_predicate(
+        if ($self->_create_predicate(
                 'spec' => $sub_contents->{'expand'},
             )->evaluate(
                 'path_info' => $self->path_info(),
@@ -415,7 +414,7 @@ sub create_new_nav_menu_item
     return $new_item;
 }
 
-sub render_tree_contents
+sub _render_tree_contents
 {
     my $self = shift;
 
@@ -426,7 +425,7 @@ sub render_tree_contents
     my $sub_contents = $args{sub_contents};
 
     my $new_item =
-        $self->create_new_nav_menu_item(
+        $self->_create_new_nav_menu_item(
             %args,
         );
 
@@ -435,7 +434,7 @@ sub render_tree_contents
         foreach my $sub_contents_sub (@{$sub_contents->{subs}})
         {
             $new_item->add_sub(
-                $self->render_tree_contents(
+                $self->_render_tree_contents(
                     'sub_contents' => $sub_contents_sub,
                 )
             );
@@ -458,13 +457,13 @@ sub gen_site_map
     return $iterator->get_results();
 }
 
-sub get_next_coords
+sub _get_next_coords
 {
     my $self = shift;
 
-    my @coords = @{shift || $self->get_current_coords};
+    my @coords = @{shift || $self->_get_current_coords};
 
-    my @branches = ($self->get_traversed_tree());
+    my @branches = ($self->_get_traversed_tree());
 
     my @dest_coords;
 
@@ -475,7 +474,7 @@ sub get_next_coords
         $branches[$i+1] = $branches[$i]->get_nth_sub($coords[$i]);
     }
 
-    if ($branches[$i]->num_subs())
+    if ($branches[$i]->_num_subs())
     {
         @dest_coords = (@coords,0);
     }
@@ -483,7 +482,7 @@ sub get_next_coords
     {
         for($i--;$i>=0;$i--)
         {
-            if ($branches[$i]->num_subs() > ($coords[$i]+1))
+            if ($branches[$i]->_num_subs() > ($coords[$i]+1))
             {
                 @dest_coords = (@coords[0 .. ($i-1)], $coords[$i]+1);
                 last;
@@ -498,11 +497,11 @@ sub get_next_coords
     return \@dest_coords;
 }
 
-sub get_prev_coords
+sub _get_prev_coords
 {
     my $self = shift;
 
-    my @coords = @{shift || $self->get_current_coords()};
+    my @coords = @{shift || $self->_get_current_coords()};
 
     if (scalar(@coords) == 0)
     {
@@ -517,7 +516,7 @@ sub get_prev_coords
                 $coords[$#coords]-1
             );
         # Continue in this leaf to the end.
-        my $new_coords = $self->get_most_advanced_leaf(\@previous_leaf);
+        my $new_coords = $self->_get_most_advanced_leaf(\@previous_leaf);
 
         return $new_coords;
     }
@@ -527,11 +526,11 @@ sub get_prev_coords
     }
 }
 
-sub get_up_coords
+sub _get_up_coords
 {
     my $self = shift;
 
-    my @coords = @{shift || $self->get_current_coords};
+    my @coords = @{shift || $self->_get_current_coords};
 
     if (scalar(@coords) == 0)
     {
@@ -548,11 +547,11 @@ sub get_up_coords
     }
 }
 
-sub get_top_coords
+sub _get_top_coords
 {
     my $self = shift;
 
-    my @coords = @{shift || $self->get_current_coords()};
+    my @coords = @{shift || $self->_get_current_coords()};
 
     if ((! @coords) || ((@coords == 1) && ($coords[0] == 0)))
     {
@@ -564,21 +563,21 @@ sub get_top_coords
     }
 }
 
-sub is_skip
+sub _is_skip
 {
     my $self = shift;
     my $coords = shift;
 
-    my $iterator = $self->get_nav_menu_traverser();
+    my $iterator = $self->_get_nav_menu_traverser();
 
     my $ret = $iterator->find_node_by_coords($coords);
 
     my $item = $ret->{item};
 
-    return $item->node()->skip();
+    return $item->_node()->skip();
 }
 
-sub get_coords_while_skipping_skips
+sub _get_coords_while_skipping_skips
 {
     my $self = shift;
 
@@ -586,12 +585,12 @@ sub get_coords_while_skipping_skips
     my $coords = shift(@_);
     if (!$coords)
     {
-        $coords = $self->get_current_coords();
+        $coords = $self->_get_current_coords();
     }
 
     my $do_once = 1;
 
-    while ($do_once || $self->is_skip($coords))
+    while ($do_once || $self->_is_skip($coords))
     {
         $coords = $callback->($self, $coords);
     }
@@ -603,7 +602,7 @@ sub get_coords_while_skipping_skips
     return $coords;
 }
 
-sub get_most_advanced_leaf
+sub _get_most_advanced_leaf
 {
     my $self = shift;
 
@@ -613,7 +612,7 @@ sub get_most_advanced_leaf
     my @coords = @{$coords_ref};
 
     # Get a reference to the contents HDS (= hierarchial data structure)
-    my $branch = $self->get_traversed_tree();
+    my $branch = $self->_get_traversed_tree();
 
     # Get to the current branch by advancing to the offset 
     foreach my $c (@coords)
@@ -623,7 +622,7 @@ sub get_most_advanced_leaf
     }
 
     # As long as there is something deeper
-    while (my $num_subs = $branch->num_subs())
+    while (my $num_subs = $branch->_num_subs())
     {
         my $index = $num_subs-1;
         # We are going to return it, so store it
@@ -643,11 +642,11 @@ sub get_rel_url_from_coords
     my $coords = shift;
 
     my ($ptr,$host);
-    my $iterator = $self->get_nav_menu_traverser();
+    my $iterator = $self->_get_nav_menu_traverser();
     my $node_ret = $iterator->find_node_by_coords($coords);
     my $item = $node_ret->{'item'};
 
-    return $self->get_url_to_item('item' => $item);
+    return $self->_get_url_to_item('item' => $item);
 }
 
 =end comment
@@ -657,13 +656,13 @@ sub get_rel_url_from_coords
 # The traversed_tree is the tree that is calculated from the tree given
 # by the user and some other parameters such as the host and path_info.
 # It is passed to the NavMenu::Iterator::* classes as argument.
-sub get_traversed_tree
+sub _get_traversed_tree
 {
     my $self = shift;
 
     if (! $self->{'traversed_tree'})
     {
-        my $gen_retval = $self->gen_traversed_tree();
+        my $gen_retval = $self->_gen_traversed_tree();
         $self->{'traversed_tree'} = $gen_retval->{'tree'};
         $self->{'current_coords'} = $gen_retval->{'current_coords'};
         $self->{'leading_path_coords'} = $gen_retval->{'leading_path_coords'};
@@ -671,12 +670,12 @@ sub get_traversed_tree
     return $self->{'traversed_tree'};
 }
 
-sub gen_traversed_tree
+sub _gen_traversed_tree
 {
     my $self = shift;
 
     my $tree = 
-        $self->render_tree_contents(
+        $self->_render_tree_contents(
             'sub_contents' => $self->{tree_contents},
             );
 
@@ -690,7 +689,7 @@ sub gen_traversed_tree
 
     my $current_coords = $find_coords_iterator->get_final_coords() || [];
     my $leading_path_coords = 
-        $find_coords_iterator->get_leading_path_coords() || [];
+        $find_coords_iterator->_get_leading_path_coords() || [];
 
     # The root should always be expanded because:
     # 1. If one of the leafs was marked as expanded so will its ancestors
@@ -707,7 +706,7 @@ sub gen_traversed_tree
         };
 }
 
-sub get_leading_path_of_coords
+sub _get_leading_path_of_coords
 {
     my $self = shift;
 
@@ -716,16 +715,16 @@ sub get_leading_path_of_coords
     my @leading_path;
 
     {
-        my $iterator = $self->get_nav_menu_traverser(); 
+        my $iterator = $self->_get_nav_menu_traverser(); 
         my $fill_leading_path_callback =
             sub {
                 my %args = (@_);
                 my $item = $args{item};
                 my $iterator = $args{'self'};
-                my $node = $item->node();
+                my $node = $item->_node();
                 # This is a workaround for the root link.
                 my $host_url = (defined($node->url()) ? ($node->url()) : "");
-                my $host = $item->accum_state()->{'host'};
+                my $host = $item->_accum_state()->{'host'};
 
                 my $url_type =
                     ($node->url_is_abs() ?
@@ -740,7 +739,7 @@ sub get_leading_path_of_coords
                         'title' => $node->title(),
                         'label' => $node->text(),
                         'direct_url' =>
-                            $self->get_url_to_item('item' => $item),
+                            $self->_get_url_to_item('item' => $item),
                         'url_type' => $url_type,
                     );
             };
@@ -753,17 +752,17 @@ sub get_leading_path_of_coords
 
     return \@leading_path;
 }
-sub get_leading_path_coords
+sub _get_leading_path_coords
 {
     my $self = shift;
     return $self->{'leading_path_coords'};
 }
 
-sub get_leading_path
+sub _get_leading_path
 {
     my $self = shift;
-    return $self->get_leading_path_of_coords(
-        'coords' => $self->get_leading_path_coords()
+    return $self->_get_leading_path_of_coords(
+        'coords' => $self->_get_leading_path_coords()
     );
 }
 
@@ -773,7 +772,7 @@ sub render
 
     my %args = (@_);
 
-    my $iterator = $self->get_nav_menu_traverser();
+    my $iterator = $self->_get_nav_menu_traverser();
     $iterator->traverse();
     my $html = $iterator->get_results();
     
@@ -784,12 +783,12 @@ sub render
 
     my %links_proto = 
         (
-            'prev' => $self->get_coords_while_skipping_skips(
-                        \&get_prev_coords),
-            'next' => $self->get_coords_while_skipping_skips(
-                        \&get_next_coords),
-            'up' => $self->get_up_coords(),
-            'top' => $self->get_top_coords(),
+            'prev' => $self->_get_coords_while_skipping_skips(
+                        \&_get_prev_coords),
+            'next' => $self->_get_coords_while_skipping_skips(
+                        \&_get_next_coords),
+            'up' => $self->_get_up_coords(),
+            'top' => $self->_get_top_coords(),
         );
 
     while (my ($link_rel, $coords) = each(%links_proto))
@@ -803,7 +802,7 @@ sub render
         if (defined($coords))
         {
             my $obj = 
-                $self->get_leading_path_of_coords(
+                $self->_get_leading_path_of_coords(
                     'coords' => $coords
                 )->[-1];
             
@@ -817,7 +816,7 @@ sub render
     return 
         {
             'html' => $html,
-            'leading_path' => $self->get_leading_path(),
+            'leading_path' => $self->_get_leading_path(),
             'nav_links' => \%nav_links,
             'nav_links_obj' => \%nav_links_obj,
         };
@@ -880,6 +879,10 @@ example above and see more examples in the tests, and complete working sites
 in the Subversion repositories at 
 L<http://stalker.iguide.co.il:8080/svn/shlomif-homepage/>
 and L<http://opensvn.csie.org/perlbegin/perl-begin/>.
+
+=head1 USAGE
+
+=head2 my $nav_menu = HTML::Widgets::NavMenu->new(@args)
 
 To use this module call the constructor with the following named arguments:
 
@@ -970,7 +973,7 @@ If classes are undef, the UL tag will not contain a class parameter.
 A complete invocation of an HTML::Widgets::NavMenu constructor can be
 found in the SYNOPSIS above.
 
-After you initialize an instance of the navigation menu object, you need to
+After you _init an instance of the navigation menu object, you need to
 get the results using the render function.
 
 =head2 $results = $nav_menu->render()

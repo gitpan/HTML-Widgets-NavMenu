@@ -1,5 +1,8 @@
 package HTML::Widgets::NavMenu::TagGen;
 
+use strict;
+use warnings;
+
 use base 'HTML::Widgets::NavMenu::Object';
 use base 'Class::Accessor';
 
@@ -9,7 +12,18 @@ __PACKAGE__->mk_accessors(
     qw(name attributes)
 );
 
-sub initialize
+=head1 NAME
+
+HTML::Widgets::NavMenu::TagGen - class to generate tags.
+
+=head1 SYNOPSIS
+
+For internal use only.
+
+=head1 METHODS
+=cut
+
+sub _init
 {
     my $self = shift;
 
@@ -20,6 +34,12 @@ sub initialize
 
     return 0;
 }
+
+=head2 $self->gen($attribute_values, $is_standalone)
+
+Generate the tag.
+
+=cut
 
 sub gen
 {

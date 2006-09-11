@@ -5,26 +5,37 @@ use warnings;
 
 use base qw(HTML::Widgets::NavMenu::Tree::Iterator);
 
-sub initialize
+use base 'Class::Accessor';
+
+__PACKAGE__->mk_accessors(qw(
+    nav_menu
+    ));
+
+=head1 NAME
+
+HTML::Widgets::NavMenu::Iterator::Base - base class for the iterator.
+
+=head1 SYNOPSIS
+
+For internal use only.
+
+=head1 METHODS
+=cut
+
+sub _init
 {
     my $self = shift;
 
-    $self->SUPER::initialize(@_);
+    $self->SUPER::_init(@_);
 
     my %args = (@_);
 
-    $self->{'nav_menu'} = $args{'nav_menu'} or
+    $self->nav_menu($args{'nav_menu'}) or
         die "nav_menu not specified!";
 
     $self->{'html'} = [];
 
     return 0;
-}
-
-sub nav_menu
-{
-    my $self = shift;
-    return $self->{'nav_menu'};
 }
 
 sub _add_tags
@@ -44,14 +55,27 @@ sub _is_top_separator
 {
     my $self = shift;
 
-    return $self->top->node->separator;
+    return $self->top->_node->separator;
 }
+
+=head2 $self->get_initial_node()
+
+Gets the initial node.
+
+=cut
 
 sub get_initial_node
 {
     my $self = shift;
-    return $self->nav_menu->get_traversed_tree();
+    return $self->nav_menu->_get_traversed_tree();
 }
+
+=head2 $self->get_node_subs({ args => $node})
+
+Gets the subs of the node.
+
+=cut
+
 
 sub get_node_subs
 {
@@ -60,6 +84,12 @@ sub get_node_subs
     my $node = $args{'node'};
     return [ @{$node->subs()} ];
 }
+
+=head2 $self->get_new_accum_state( item => $item, node => $node )
+
+Gets the new accumulated state.
+
+=cut
 
 sub get_new_accum_state
 {
@@ -71,7 +101,7 @@ sub get_new_accum_state
     my $prev_state;
     if (defined($parent_item))
     {
-        $prev_state = $parent_item->accum_state();
+        $prev_state = $parent_item->_accum_state();
     }
     else
     {
@@ -105,12 +135,26 @@ sub get_new_accum_state
         };
 }
 
+=head2 my $array_ref = $self->get_results()
+
+Returns an array reference with the resultant HTML.
+
+=cut
+
 sub get_results
 {
     my $self = shift;
 
     return [ @{$self->{'html'}} ];
 }
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2006 Shlomi Fish, all rights reserved.
+
+This program is released under the following license: MIT X11.
+
+=cut
 
 1;
 

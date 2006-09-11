@@ -1,16 +1,28 @@
 package HTML::Widgets::NavMenu::Iterator::NavMenu;
 
 use strict;
+use warnings;
 
 use base qw(HTML::Widgets::NavMenu::Iterator::Html);
 
 use HTML::Widgets::NavMenu::EscapeHtml;
 
-sub initialize
+=head1 NAME
+
+HTML::Widgets::NavMenu::Iterator::NavMenu - navmenu iterator.
+
+=head1 SYNOPSIS
+
+For internal use only.
+
+=head1 METHODS
+=cut
+
+sub _init
 {
     my $self = shift;
 
-    $self->SUPER::initialize(@_);
+    $self->SUPER::_init(@_);
 
     my %args = (@_);
 
@@ -22,6 +34,12 @@ sub initialize
     return 0;
 }
 
+=head2 $self->gen_ul_tag(depth => $depth);
+
+Generate a UL tag of depth $depth.
+
+=cut
+
 # Depth is 1 for the uppermost depth.
 sub gen_ul_tag
 {
@@ -31,7 +49,7 @@ sub gen_ul_tag
 
     my $depth = $args{'depth'};
 
-    my $class = $self->get_ul_class('depth' => $depth);
+    my $class = $self->_get_ul_class('depth' => $depth);
 
     return "<ul" .
         (defined($class) ?
@@ -40,7 +58,7 @@ sub gen_ul_tag
         ) . ">";
 }
 
-sub get_ul_class
+sub _get_ul_class
 {
     my $self = shift;
 
@@ -51,6 +69,13 @@ sub get_ul_class
     return $self->{'ul_classes'}->[$depth-1];
 }
 
+=head2 get_currently_active_text ( $node )
+
+Calculates the highlighted text for the node C<$node>. Normally surrounds it
+with C<<< <b> ... </b> >>> tags.
+
+=cut
+
 sub get_currently_active_text
 {
     my $self = shift;
@@ -58,10 +83,16 @@ sub get_currently_active_text
     return "<b>" . $node->text() . "</b>";
 }
 
+=head2 $self->get_link_tag()
+
+Gets the tag for the link - an item in the menu.
+
+=cut
+
 sub get_link_tag
 {
     my $self = shift;
-    my $node = $self->top->node();
+    my $node = $self->top->_node();
     if ($node->CurrentlyActive())
     {
         return $self->get_currently_active_text($node);
@@ -72,25 +103,31 @@ sub get_link_tag
     }
 }
 
-sub start_root
+sub _start_root
 {
     my $self = shift;
     
     $self->_add_tags($self->gen_ul_tag('depth' => $self->stack->len()));
 }
 
-sub start_sep
+sub _start_sep
 {
     my $self = shift;
 
     $self->_add_tags("</ul>");
 }
 
-sub start_handle_role
+sub _start_handle_role
 {
     my $self = shift;
-    return $self->start_handle_non_role();
+    return $self->_start_handle_non_role();
 }
+
+=head2 my @tags = $self->get_open_sub_menu_tags()
+
+Gets the tags to open a new sub menu.
+
+=cut
 
 sub get_open_sub_menu_tags
 {
@@ -98,98 +135,104 @@ sub get_open_sub_menu_tags
     return ("<br />", $self->gen_ul_tag('depth' => $self->stack->len()));
 }
 
-sub start_handle_non_role
+sub _start_handle_non_role
 {
     my $self = shift;
     my $top_item = $self->top;
     my @tags_to_add = ("<li>", $self->get_link_tag());
-    if ($top_item->num_subs_to_go() && $self->is_expanded())
+    if ($top_item->_num_subs_to_go() && $self->_is_expanded())
     {
         push @tags_to_add, ($self->get_open_sub_menu_tags());
     }
     $self->_add_tags(@tags_to_add);
 }
 
-sub start_regular
+sub _start_regular
 {
     my $self = shift;
 
     my $top_item = $self->top;
-    my $node = $self->top->node();
+    my $node = $self->top->_node();
 
-    if ($self->is_hidden())
+    if ($self->_is_hidden())
     {
         # Do nothing
     }
     else
     {
-        if ($self->is_role_specified())
+        if ($self->_is_role_specified())
         {
-            $self->start_handle_role();
+            $self->_start_handle_role();
         }
         else
         {
-            $self->start_handle_non_role();
+            $self->_start_handle_non_role();
         }
     }
 }
 
-sub end_sep
+sub _end_sep
 {
     my $self = shift;
 
     $self->_add_tags($self->gen_ul_tag('depth' => $self->stack->len()-1));
 }
 
-sub end_handle_role
+sub _end_handle_role
 {
     my $self = shift;
-    return $self->end_handle_non_role();
+    return $self->_end_handle_non_role();
 }
 
-sub end_handle_non_role
+sub _end_handle_non_role
 {
     my $self = shift;
-    return $self->SUPER::end_regular();
+    return $self->SUPER::_end_regular();
 }
 
-sub end_regular
+sub _end_regular
 {
     my $self = shift;
-    if ($self->is_hidden())
+    if ($self->_is_hidden())
     {
         # Do nothing
     }
-    elsif ($self->is_role_specified())
+    elsif ($self->_is_role_specified())
     {
-        $self->end_handle_role();
+        $self->_end_handle_role();
     }
     else
     {
-        $self->end_handle_non_role();
+        $self->_end_handle_non_role();
     }
 }
 
-sub is_hidden
+sub _is_hidden
 {
     my $self = shift;
-    return $self->top->node()->hide();
+    return $self->top->_node()->hide();
 }
 
-sub is_expanded
+sub _is_expanded
 {
     my $self = shift;
-    my $node = $self->top->node();
-    return ($node->expanded() || $self->top->accum_state->{'show_always'});
+    my $node = $self->top->_node();
+    return ($node->expanded() || $self->top->_accum_state->{'show_always'});
 }
+
+=head2 $self->get_role()
+
+Retrieves the current role.
+
+=cut
 
 sub get_role
 {
     my $self = shift;
-    return $self->top->node->role();
+    return $self->top->_node->role();
 }
 
-sub is_role_specified
+sub _is_role_specified
 {
     my $self = shift;
     return defined($self->get_role());

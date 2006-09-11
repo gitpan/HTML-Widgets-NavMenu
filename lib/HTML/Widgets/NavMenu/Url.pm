@@ -1,6 +1,7 @@
 package HTML::Widgets::NavMenu::Url;
 
 use strict;
+use warnings;
 
 use HTML::Widgets::NavMenu::Object;
 
@@ -8,7 +9,18 @@ use vars qw(@ISA);
 
 @ISA=qw(HTML::Widgets::NavMenu::Object);
 
-sub initialize
+=head1 NAME
+
+HTML::Widgets::NavMenu::Url - URL manipulation class.
+
+=head1 SYNOPSIS
+
+For internal use only.
+
+=head1 METHODS
+=cut
+
+sub _init
 {
     my $self = shift;
 
@@ -17,34 +29,34 @@ sub initialize
         [ @$url ] :
         [ split(/\//, $url) ])
         ;
-    $self->{'is_dir'} = shift || 0;
+    $self->{'_is_dir'} = shift || 0;
     $self->{'mode'} = shift || 'server';
 
     return 0;
 }
 
-sub get_url
+sub _get_url
 {
     my $self = shift;
 
     return [ @{$self->{'url'}} ];
 }
 
-sub is_dir
+sub _is_dir
 {
     my $self = shift;
                                    
-    return $self->{'is_dir'};
+    return $self->{'_is_dir'};
 }
 
-sub get_relative_url
+sub _get_relative_url
 {
     my $base = shift;
     my $to = shift;
     my $slash_terminated = shift;
 
-    my @this_url = @{$base->get_url()};
-    my @other_url = @{$to->get_url()};
+    my @this_url = @{$base->_get_url()};
+    my @other_url = @{$to->_get_url()};
 
     my $ret;
 
@@ -63,11 +75,11 @@ sub get_relative_url
 
     if ((! @this_url) && (! @other_url))
     {
-        if ((!$base->is_dir() ) ne (!$to->is_dir()))
+        if ((!$base->_is_dir() ) ne (!$to->_is_dir()))
         {
-            die "Two identical URLs with non-matching is_dir()'s";
+            die "Two identical URLs with non-matching _is_dir()'s";
         }
-        if (! $base->is_dir())
+        if (! $base->_is_dir())
         {
             if (scalar(@this_url_bak))
             {
@@ -80,7 +92,7 @@ sub get_relative_url
         }
     }
 
-    if (($base->{'mode'} eq "harddisk") && ($to->is_dir()))
+    if (($base->{'mode'} eq "harddisk") && ($to->_is_dir()))
     {
         push @other_url, "index.html";
     }
@@ -96,7 +108,7 @@ sub get_relative_url
         else
         {
             $ret .= join("/", (map { ".." } @this_url), @other_url);         
-            if ($to->is_dir() && ($base->{'mode'} ne "harddisk"))
+            if ($to->_is_dir() && ($base->{'mode'} ne "harddisk"))
             {
                 $ret .= "/";
             }
@@ -106,16 +118,23 @@ sub get_relative_url
     {
         my @components = ((map { ".." } @this_url[1..$#this_url]), @other_url);
         $ret .= ("./" . join("/", @components)); 
-        if (($to->is_dir()) && ($base->{'mode'} ne "harddisk") && scalar(@components))
+        if (($to->_is_dir()) && ($base->{'mode'} ne "harddisk") && scalar(@components))
         {
             $ret .= "/";
         }
     }
 
-    #if (($to->is_dir()) && (scalar(@other_url) || $slash_terminated))
+    #if (($to->_is_dir()) && (scalar(@other_url) || $slash_terminated))
 
     return $ret;
 }
 
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2006 Shlomi Fish, all rights reserved.
+
+This program is released under the following license: MIT X11.
+
+=cut
 
 1;
