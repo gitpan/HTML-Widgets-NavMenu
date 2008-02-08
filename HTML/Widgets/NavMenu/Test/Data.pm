@@ -749,6 +749,147 @@ my @with_skips_nav_menu =
     },
 );
 
+my @root_path_not_slash =
+(
+    'current_host' => "default",
+    'hosts' => { 'default' => { 'base_url' => "http://www.hello.com/" }, },
+    'tree_contents' =>
+    {
+        'host' => "default",
+        'text' => "Top 1",
+        'title' => "T1 Title",
+        'subs' =>
+        [
+            {
+                'text' => "Home",
+                'url' => "puzzles/",
+                subs =>
+                [
+                    {
+                        url => "puzzles/foo/",
+                        'text' => "The Foo Puzzle",
+                    },
+                    {
+                        url => "puzzles/bar/",
+                        text => "The Bar Puzzle",
+                    },
+                ],
+            },
+            {
+                'text' => "About Me",
+                'title' => "About Myself",
+                'url' => "puzzles/me/",
+            },
+        ],
+    },
+);
+
+my @non_capturing_expand =
+(
+    'current_host' => "default",
+    'hosts' => { 'default' => { 'base_url' => "http://www.hello.com/" }, },
+    'tree_contents' =>
+    {
+        'host' => "default",
+        'text' => "Top 1",
+        'title' => "T1 Title",
+        'subs' =>
+        [
+            {
+                'text' => "Home",
+                'url' => "",
+            },
+            {
+                'text' => "Humour", 
+                'url' => "humour/",
+                'expand' => { 're' => "^humour/", },
+                'title' => "My Humorous Creations",
+                'subs' => 
+                [
+                    {
+                        'text' => "Stories",
+                        'url' => "humour/stories/",
+                        'title' => "Large-Scale Stories I Wrote",
+                        'expand' => { 're' => "^humour/", capt => 0,},
+                        'subs' =>
+                        [
+                            {
+                                'text' => "The Enemy", 
+                                'url' => "humour/TheEnemy/",
+                            },
+                            {
+                                'text' => "TOW The Fountainhead",
+                                'url' => "humour/TOWTF/",
+                            },
+                        ],
+                    },
+                    {
+                        'text' => "By Others",
+                        'url' => "humour/by-others/",
+                        'expand' => { 're' => "^humour/by-others/", },
+                    },
+                ],
+            }
+        ],
+    },
+);
+
+
+my @non_capturing_expand_reversed =
+(
+    'current_host' => "default",
+    'hosts' => { 'default' => { 'base_url' => "http://www.hello.com/" }, },
+    'tree_contents' =>
+    {
+        'host' => "default",
+        'text' => "Top 1",
+        'title' => "T1 Title",
+        'subs' =>
+        [
+            {
+                'text' => "Home",
+                'url' => "",
+            },
+            {
+                'text' => "Humour", 
+                'url' => "humour/",
+                'expand' => { 're' => "^humour/", },
+                'title' => "My Humorous Creations",
+                'subs' => 
+                [
+                    {
+                        'text' => "Stories",
+                        'url' => "humour/stories/",
+                        'title' => "Large-Scale Stories I Wrote",
+                        'subs' =>
+                        [
+                            {
+                                'text' => "The Enemy", 
+                                'url' => "humour/TheEnemy/",
+                            },
+                            {
+                                'text' => "TOW The Fountainhead",
+                                'url' => "humour/TOWTF/",
+                            },
+                        ],
+                    },
+                    {
+                        'text' => "By Others",
+                        'url' => "humour/by-others/",
+                        'expand' => { 're' => "^humour/", capt => 0, },
+                        subs =>
+                        [
+                            {
+                                text => "Foo",
+                                url => "humour/by-others/foo.html",
+                            },
+                        ],
+                    },
+                ],
+            }
+        ],
+    },
+);
 
 sub get_test_data
 {
@@ -769,6 +910,9 @@ sub get_test_data
             'mixed_expand_menu' => \@mixed_expand_nav_menu,
             'special_chars_menu' => \@special_chars_nav_menu,
             'with_skips' => \@with_skips_nav_menu,
+            'root_path_not_slash' => \@root_path_not_slash,
+            'non_capturing_expand' => \@non_capturing_expand,
+            'non_capturing_expand_reversed' => \@non_capturing_expand_reversed,
         };
 }
 

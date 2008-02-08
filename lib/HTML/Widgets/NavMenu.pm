@@ -3,7 +3,7 @@ use warnings;
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '1.0001';
+our $VERSION = '1.0100';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -103,7 +103,7 @@ sub does_item_expand
 {
     my $self = shift;
     my $item = $self->top();
-    return $item->_node()->expanded();
+    return $item->_node()->capture_expanded();
 }
 
 sub node_start
@@ -400,14 +400,17 @@ sub _create_new_nav_menu_item
 
     if (exists($sub_contents->{'expand'}))
     {
-        if ($self->_create_predicate(
+        my $expand_val = 
+            $self->_create_predicate(
                 'spec' => $sub_contents->{'expand'},
             )->evaluate(
                 'path_info' => $self->path_info(),
                 'current_host' => $self->current_host(),
-            ))
+            )
+            ;
+        if ($expand_val)
         {
-            $new_item->expand();
+            $new_item->expand($expand_val);
         }
     }
 
@@ -711,47 +714,61 @@ sub _get_leading_path_of_coords
     my $self = shift;
 
     my (%args) = (@_);
+
+    my $coords = [ @{$args{coords}} ];
     
-    my @leading_path;
-
+    if (! @$coords )
     {
-        my $iterator = $self->_get_nav_menu_traverser(); 
-        my $fill_leading_path_callback =
-            sub {
-                my %args = (@_);
-                my $item = $args{item};
-                my $iterator = $args{'self'};
-                my $node = $item->_node();
-                # This is a workaround for the root link.
-                my $host_url = (defined($node->url()) ? ($node->url()) : "");
-                my $host = $item->_accum_state()->{'host'};
-
-                my $url_type =
-                    ($node->url_is_abs() ?
-                        "full_abs" :
-                        $item->get_url_type()
-                    );
-
-                push @leading_path,
-                    HTML::Widgets::NavMenu::LeadingPath::Component->new(
-                        'host' => $host,
-                        'host_url' => $host_url,
-                        'title' => $node->title(),
-                        'label' => $node->text(),
-                        'direct_url' =>
-                            $self->_get_url_to_item('item' => $item),
-                        'url_type' => $url_type,
-                    );
-            };
-
-        $iterator->find_node_by_coords(
-            $args{'coords'},
-            $fill_leading_path_callback,
-            );
+        $coords = [ 0 ];
     }
 
-    return \@leading_path;
+    my @leading_path;
+    my $iterator = $self->_get_nav_menu_traverser();
+
+    COORDS_LOOP:
+    while (1)
+    {
+        my $ret = $iterator->find_node_by_coords(
+            $coords
+        );
+
+        my $item = $ret->{item};
+
+        my $node = $item->_node();
+        # This is a workaround for the root link.
+        my $host_url = (defined($node->url()) ? ($node->url()) : "");
+        my $host = $item->_accum_state()->{'host'};
+
+        my $url_type =
+            ($node->url_is_abs() ?
+                "full_abs" :
+                $item->get_url_type()
+            );
+
+        push @leading_path,
+            HTML::Widgets::NavMenu::LeadingPath::Component->new(
+                'host' => $host,
+                'host_url' => $host_url,
+                'title' => $node->title(),
+                'label' => $node->text(),
+                'direct_url' =>
+                    $self->_get_url_to_item('item' => $item),
+                'url_type' => $url_type,
+            );
+
+        if ((scalar(@$coords) == 1) && ($coords->[0] == 0))
+        {
+            last COORDS_LOOP;
+        }
+    }
+    continue
+    {
+        $coords = $self->_get_up_coords($coords);
+    }
+
+    return [ reverse(@leading_path) ];
 }
+
 sub _get_leading_path_coords
 {
     my $self = shift;
@@ -1244,6 +1261,11 @@ This specifies the constant boolean value of the predicate.
 
 Note that if C<'cb'> is specified then both C<'re'> and C<'bool'> will
 be ignored, and C<'re'> over-rides C<'bool'>. 
+
+Orthogonal to these keys is the C<'capt'> key which specifies whether this
+expansion "captures" or not. This is relevant to the behaviour in the
+breadcrumbs' trails, if one wants the item to appear there or not. The
+default value is true.
 
 If the predicate is not a hash reference, then HTML::Widgets::NavMenu will
 try to guess what it is. If it's a sub-routine reference, it will be an
