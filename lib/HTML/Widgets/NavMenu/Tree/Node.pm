@@ -5,8 +5,6 @@ use warnings;
 
 use base 'HTML::Widgets::NavMenu::Object';
 
-use base 'Class::Accessor';
-
 __PACKAGE__->mk_accessors(
     qw(CurrentlyActive expanded hide host role rec_url_type),
     qw(separator show_always skip subs text title url url_is_abs url_type),
@@ -44,7 +42,7 @@ sub expand
 {
     my $self = shift;
     my $v = @_ ? (shift(@_)) : 
-        HTML::Widgets::NavMenu::ExpandVal->new(capture => 1)
+        HTML::Widgets::NavMenu::ExpandVal->new({capture => 1})
         ;
     # Don't set it to something if it's already capture_expanded(),
     # otherwise it can set as a non-capturing expansion.
@@ -123,7 +121,7 @@ sub get_nth_sub
 sub _num_subs
 {
     my $self = shift;
-    return scalar(@{$self->{'subs'}});
+    return scalar(@{$self->subs()});
 }
 
 =head2 $self->list_regular_keys()

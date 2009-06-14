@@ -5,8 +5,6 @@ use warnings;
 
 use base 'HTML::Widgets::NavMenu::Object';
 
-use base 'Class::Accessor';
-
 __PACKAGE__->mk_accessors(
     qw(type bool regexp callback capture),
     );
@@ -120,19 +118,17 @@ sub _assign_spec
 
 sub _evaluate_bool
 {
-    my $self = shift;
+    my ($self, $args) = @_;
 
-    my (%args) = (@_);
-
-    my $path_info = $args{'path_info'};
-    my $current_host = $args{'current_host'};
+    my $path_info = $args->{'path_info'};
+    my $current_host = $args->{'current_host'};
 
     my $type = $self->type();
 
     if ($type eq "callback")
     {
         return $self->callback()->(
-            %args
+            %$args
         );
     }
     elsif ($type eq "bool")
@@ -150,7 +146,7 @@ sub evaluate
 {
     my $self = shift;
 
-    my $bool = $self->_evaluate_bool(@_);
+    my $bool = $self->_evaluate_bool({@_});
 
     if (!$bool)
     {
@@ -159,7 +155,9 @@ sub evaluate
     else
     {
         return HTML::Widgets::NavMenu::ExpandVal->new(
-            capture => $self->capture()
+            {
+                capture => $self->capture()
+            },
         );
     }
 }

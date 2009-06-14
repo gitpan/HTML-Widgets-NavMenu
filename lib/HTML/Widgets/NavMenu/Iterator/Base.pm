@@ -5,9 +5,8 @@ use warnings;
 
 use base qw(HTML::Widgets::NavMenu::Tree::Iterator);
 
-use base 'Class::Accessor';
-
 __PACKAGE__->mk_accessors(qw(
+    _html
     nav_menu
     ));
 
@@ -25,15 +24,14 @@ For internal use only.
 sub _init
 {
     my $self = shift;
+    my $args = shift;
 
-    $self->SUPER::_init(@_);
+    $self->SUPER::_init($args);
 
-    my %args = (@_);
-
-    $self->nav_menu($args{'nav_menu'}) or
+    $self->nav_menu($args->{'nav_menu'}) or
         die "nav_menu not specified!";
 
-    $self->{'html'} = [];
+    $self->_html([]);
 
     return 0;
 }
@@ -41,7 +39,7 @@ sub _init
 sub _add_tags
 {
     my $self = shift;
-    push (@{$self->{'html'}}, @_);
+    push (@{$self->_html()}, @_);
 }
 
 sub _is_root
@@ -70,7 +68,7 @@ sub get_initial_node
     return $self->nav_menu->_get_traversed_tree();
 }
 
-=head2 $self->get_node_subs({ args => $node})
+=head2 $self->get_node_subs({ node => $node})
 
 Gets the subs of the node.
 
@@ -79,24 +77,26 @@ Gets the subs of the node.
 
 sub get_node_subs
 {
-    my $self = shift;
-    my %args = (@_);
-    my $node = $args{'node'};
+    my ($self, $args) = @_;
+
+    my $node = $args->{'node'};
+
     return [ @{$node->subs()} ];
 }
 
-=head2 $self->get_new_accum_state( item => $item, node => $node )
+=head2 $self->get_new_accum_state( { item => $item, node => $node } )
 
 Gets the new accumulated state.
 
 =cut
 
+# TODO : This method is too long - refactor.
 sub get_new_accum_state
 {
-    my $self = shift;
-    my %args = (@_);
-    my $parent_item = $args{'item'};
-    my $node = $args{'node'};
+    my ($self, $args) = @_;
+
+    my $parent_item = $args->{'item'};
+    my $node = $args->{'node'};
     
     my $prev_state;
     if (defined($parent_item))
@@ -145,7 +145,7 @@ sub get_results
 {
     my $self = shift;
 
-    return [ @{$self->{'html'}} ];
+    return [ @{$self->_html()} ];
 }
 
 =head1 COPYRIGHT & LICENSE

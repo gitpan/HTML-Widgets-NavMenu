@@ -7,6 +7,10 @@ use base qw(HTML::Widgets::NavMenu::Iterator::Html);
 
 use HTML::Widgets::NavMenu::EscapeHtml;
 
+__PACKAGE__->mk_accessors(qw(
+    _ul_classes
+    ));
+
 =head1 NAME
 
 HTML::Widgets::NavMenu::Iterator::NavMenu - navmenu iterator.
@@ -21,20 +25,17 @@ For internal use only.
 sub _init
 {
     my $self = shift;
+    my $args = shift;
 
-    $self->SUPER::_init(@_);
-
-    my %args = (@_);
-
-    my $ul_classes = $args{'ul_classes'};
+    $self->SUPER::_init($args);
 
     # Make a fresh copy just to be on the safe side.
-    $self->{'ul_classes'} = [ @$ul_classes ];
+    $self->_ul_classes([ @{$args->{'ul_classes'}} ]);
 
     return 0;
 }
 
-=head2 $self->gen_ul_tag(depth => $depth);
+=head2 $self->gen_ul_tag({depth => $depth});
 
 Generate a UL tag of depth $depth.
 
@@ -43,13 +44,11 @@ Generate a UL tag of depth $depth.
 # Depth is 1 for the uppermost depth.
 sub gen_ul_tag
 {
-    my $self = shift;
+    my ($self, $args) = @_;
 
-    my %args = (@_);
+    my $depth = $args->{'depth'};
 
-    my $depth = $args{'depth'};
-
-    my $class = $self->_get_ul_class('depth' => $depth);
+    my $class = $self->_get_ul_class({'depth' => $depth});
 
     return "<ul" .
         (defined($class) ?
@@ -60,13 +59,11 @@ sub gen_ul_tag
 
 sub _get_ul_class
 {
-    my $self = shift;
+    my ($self, $args) = @_;
 
-    my %args = (@_);
+    my $depth = $args->{'depth'};
 
-    my $depth = $args{'depth'};
-
-    return $self->{'ul_classes'}->[$depth-1];
+    return $self->_ul_classes->[$depth-1];
 }
 
 =head2 get_currently_active_text ( $node )
@@ -107,7 +104,13 @@ sub _start_root
 {
     my $self = shift;
     
-    $self->_add_tags($self->gen_ul_tag('depth' => $self->stack->len()));
+    $self->_add_tags(
+        $self->gen_ul_tag(
+            {
+                'depth' => $self->stack->len()
+            }
+        )
+    );
 }
 
 sub _start_sep
@@ -132,7 +135,11 @@ Gets the tags to open a new sub menu.
 sub get_open_sub_menu_tags
 {
     my $self = shift;
-    return ("<br />", $self->gen_ul_tag('depth' => $self->stack->len()));
+    return ("<br />", 
+        $self->gen_ul_tag(
+            {'depth' => $self->stack->len()}
+        )
+    );
 }
 
 sub _start_handle_non_role
@@ -175,7 +182,13 @@ sub _end_sep
 {
     my $self = shift;
 
-    $self->_add_tags($self->gen_ul_tag('depth' => $self->stack->len()-1));
+    $self->_add_tags(
+        $self->gen_ul_tag(
+            {
+                'depth' => $self->stack->len()-1
+            }
+        )
+    );
 }
 
 sub _end_handle_role

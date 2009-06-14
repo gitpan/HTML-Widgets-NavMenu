@@ -34,9 +34,10 @@ use HTML::Widgets::NavMenu::EscapeHtml;
 sub _construct_new_item
 {
     my $self = shift;
+    my $args = shift;
 
     return HTML::Widgets::NavMenu::Iterator::Html::Item->new(
-        @_
+        $args,
     );
 }
 
@@ -143,9 +144,7 @@ sub get_a_tag
 
     $tag .= " href=\"" .
         escape_html(
-            $self->nav_menu()->_get_url_to_item(
-                'item' => $item,
-            )
+            $self->nav_menu()->_get_url_to_item($item)
         ). "\"";
     if (defined($title))
     {

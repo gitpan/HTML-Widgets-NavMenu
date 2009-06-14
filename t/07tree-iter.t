@@ -6,17 +6,22 @@ use strict;
 
 use base 'HTML::Widgets::NavMenu::Tree::Iterator';
 
+__PACKAGE__->mk_accessors(qw(
+    _results
+    _data
+    ));
+
 sub _init
 {
     my $self = shift;
 
     $self->SUPER::_init(@_);
 
-    my %args = (@_);
+    my $args = shift;
 
-    $self->{'data'} = $args{'data'};
+    $self->_data($args->{'data'});
 
-    $self->{'results'} = [];
+    $self->_results([]);
 
     return 0;
 }
@@ -24,21 +29,22 @@ sub _init
 sub append
 {
     my $self = shift;
-    push @{$self->{'results'}}, @_;
+    push @{$self->_results()}, @_;
     return 0;
 }
 
 sub get_initial_node
 {
     my $self = shift;
-    return $self->{'data'};
+    return $self->_data();
 }
 
 sub get_node_subs
 {
-    my $self = shift;
-    my %args = (@_);
-    my $node = $args{'node'};
+    my ($self, $args) = @_;
+
+    my $node = $args->{'node'};
+
     return
         exists($node->{'childs'}) ?
             [ @{$node->{'childs'}} ] :
@@ -47,10 +53,9 @@ sub get_node_subs
 
 sub get_new_accum_state
 {
-    my $self = shift;
-    my %args = (@_);
-    my $parent_item = $args{'item'};
-    my $node = $args{'node'};
+    my ($self, $args) = @_;
+    my $parent_item = $args->{'item'};
+    my $node = $args->{'node'};
 
     if (!defined($parent_item))
     {
@@ -98,11 +103,10 @@ use vars qw(@ISA);
 sub get_node_from_sub
 {
     my $self = shift;
+    my $args = shift;
 
-    my %args = (@_);
-
-    my $item = $args{'item'};
-    my $sub = $args{'sub'};
+    my $item = $args->{'item'};
+    my $sub = $args->{'sub'};
     my $node = $item->_node();
 
     return $node->{'subs_db'}->{$sub};
@@ -122,12 +126,14 @@ sub test_traverse
     $class ||= "MyIter";
     my $traverser =
         $class->new(
-            'data' => $data
+            {
+                'data' => $data
+            },
         );
 
     $traverser->traverse();
 
-    is_deeply($traverser->{'results'}, $expected, $test_name);
+    is_deeply($traverser->_results(), $expected, $test_name);
 }
 
 {

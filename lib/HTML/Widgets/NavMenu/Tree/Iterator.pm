@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use base qw(HTML::Widgets::NavMenu::Object);
-use base 'Class::Accessor';
 
 use HTML::Widgets::NavMenu::Tree::Iterator::Stack;
 use HTML::Widgets::NavMenu::Tree::Iterator::Item;
@@ -49,14 +48,14 @@ sub top
 
 sub _construct_new_item
 {
-    my $self = shift;
+    my ($self, $args) = @_;
 
     return HTML::Widgets::NavMenu::Tree::Iterator::Item->new(
-        @_
+        $args
     );
 }
 
-=head2 $self->get_new_item('node' => $node, 'parent_item' => $parent)
+=head2 $self->get_new_item({'node' => $node, 'parent_item' => $parent})
 
 Gets the new item.
 
@@ -64,21 +63,24 @@ Gets the new item.
 
 sub get_new_item
 {
-    my $self = shift;
-    my %args = (@_);
+    my ($self, $args) = @_;
 
-    my $node = $args{'node'};
-    my $parent_item = $args{'parent_item'};
+    my $node = $args->{'node'};
+    my $parent_item = $args->{'parent_item'};
 
     return
         $self->_construct_new_item(
-            'node' => $node,
-            'subs' => $self->get_node_subs('node' => $node),
-            'accum_state' => 
-                $self->get_new_accum_state(
-                    'item' => $parent_item,
-                    'node' => $node,
-                ),
+            {
+                'node' => $node,
+                'subs' => $self->get_node_subs( { 'node' => $node } ),
+                'accum_state' => 
+                    $self->get_new_accum_state(
+                        {
+                            'item' => $parent_item,
+                            'node' => $node,
+                        }
+                    ),
+            }
         );
 }
 
@@ -86,13 +88,14 @@ sub _push_into_stack
 {
     my $self = shift;
 
-    my %args = (@_);
-    my $node = $args{'node'};
+    my $node = shift;
 
     $self->stack()->push(
         $self->get_new_item(
-            'node' => $node,
-            'parent_item' => $self->top(),
+            {
+                'node' => $node,
+                'parent_item' => $self->top(),
+            }
         ),
     );
 }
@@ -107,7 +110,7 @@ sub traverse
 {
     my $self = shift;
 
-    $self->_push_into_stack('node' => $self->get_initial_node());
+    $self->_push_into_stack($self->get_initial_node());
 
     $self->coords([]);
 
@@ -131,12 +134,13 @@ sub traverse
         {
             push @{$self->coords()}, $top_item->_visited_index();
             $self->_push_into_stack(
-                'node' =>
-                    $self->get_node_from_sub(
+                $self->get_node_from_sub(
+                    {
                         'item' => $top_item,
                         'sub' => $sub_item,
-                    ),
-                );
+                    }
+                ),
+            );
             next MAIN_LOOP;
         }
         else
@@ -160,10 +164,9 @@ returned by get_node_subs() in a different way than the default.
 sub get_node_from_sub
 {
     my $self = shift;
+    my $args = shift;
 
-    my %args = (@_);
-
-    return $args{'sub'};
+    return $args->{'sub'};
 }
 
 =head2 $self->find_node_by_coords($coords, $callback)
@@ -181,7 +184,9 @@ sub find_node_by_coords
     my $idx = 0;
     my $item =
         $self->get_new_item(
-            'node' => $self->get_initial_node(),
+            {
+                'node' => $self->get_initial_node(),
+            }
         );
 
     my $internal_callback =
@@ -198,12 +203,16 @@ sub find_node_by_coords
     {
         $item =
             $self->get_new_item(
-                'node' =>
+                {
+                    'node' =>
                     $self->get_node_from_sub(
-                        'item' => $item,
-                        'sub' => $item->_get_sub($c),
+                        {
+                            'item' => $item,
+                            'sub' => $item->_get_sub($c),
+                        }
                     ),
-                'parent_item' => $item,
+                    'parent_item' => $item,
+                }
             );
         $idx++;
         $internal_callback->();
