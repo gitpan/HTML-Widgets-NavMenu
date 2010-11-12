@@ -5,10 +5,10 @@ use warnings;
 
 use base qw(HTML::Widgets::NavMenu::Tree::Iterator);
 
-__PACKAGE__->mk_accessors(qw(
+__PACKAGE__->mk_acc_ref([qw(
     _html
     nav_menu
-    ));
+    )]);
 
 =head1 NAME
 
@@ -19,6 +19,11 @@ HTML::Widgets::NavMenu::Iterator::Base - base class for the iterator.
 For internal use only.
 
 =head1 METHODS
+
+=head2 nav_menu
+
+Internal use.
+
 =cut
 
 sub _init

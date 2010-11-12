@@ -5,9 +5,11 @@ use warnings;
 
 use base 'HTML::Widgets::NavMenu::Object';
 
-__PACKAGE__->mk_accessors(
-    qw(CurrentlyActive expanded hide host role rec_url_type),
-    qw(separator show_always skip subs text title url url_is_abs url_type),
+__PACKAGE__->mk_acc_ref([
+    qw(
+    CurrentlyActive expanded hide host role rec_url_type
+    separator show_always skip subs text title url url_is_abs url_type
+    )]
     );
 
 use HTML::Widgets::NavMenu::ExpandVal;
@@ -21,13 +23,78 @@ HTML::Widgets::NavMenu::Tree::Node - an iterator for HTML.
 For internal use only.
 
 =head1 METHODS
+
+=head2 CurrentlyActive
+
+Internal use.
+
+=head2 expanded
+
+Internal use.
+
+=head2 CurrentlyActive
+
+Internal use.
+
+=head2 hide
+
+Internal use.
+
+=head2 host
+
+Internal use.
+
+=head2 role
+
+Internal use.
+
+=head2 rec_url_type
+
+Internal use.
+
+=head2 separator
+
+Internal use.
+
+=head2 show_always
+
+Internal use.
+
+=head2 skip
+
+Internal use.
+
+=head2 subs
+
+Internal use.
+
+=head2 text
+
+Internal use.
+
+=head2 title
+
+Internal use.
+
+=head2 url
+
+Internal use.
+
+=head2 url_is_abs
+
+Internal use.
+
+=head2 url_type
+
+Internal use.
+
 =cut
 
 sub _init
 {
     my $self = shift;
 
-    $self->set("subs", []);
+    $self->subs([]);
 
     return $self;
 }
@@ -165,7 +232,7 @@ sub set_values_from_hash_ref
     {
         if (exists($sub_contents->{$key}))
         {
-            $self->set($key, $sub_contents->{$key});
+            $self->$key($sub_contents->{$key});
         }
     }
 
@@ -173,7 +240,7 @@ sub set_values_from_hash_ref
     {
         if ($sub_contents->{$key})
         {
-            $self->set($key, 1);
+            $self->$key(1);
         }
     }
 }

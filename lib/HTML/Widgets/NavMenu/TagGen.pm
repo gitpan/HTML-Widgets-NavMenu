@@ -7,8 +7,8 @@ use base 'HTML::Widgets::NavMenu::Object';
 
 use HTML::Widgets::NavMenu::EscapeHtml;
 
-__PACKAGE__->mk_accessors(
-    qw(name attributes)
+__PACKAGE__->mk_acc_ref([
+    qw(name attributes)]
 );
 
 =head1 NAME
@@ -20,6 +20,15 @@ HTML::Widgets::NavMenu::TagGen - class to generate tags.
 For internal use only.
 
 =head1 METHODS
+
+=head2 name
+
+For internal use.
+
+=head2 attributes
+
+For internal use.
+
 =cut
 
 sub _init
