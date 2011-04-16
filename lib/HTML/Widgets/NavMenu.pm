@@ -3,7 +3,7 @@ use warnings;
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '1.0501';
+our $VERSION = '1.0600';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -792,10 +792,21 @@ sub _get_leading_path
 sub render
 {
     my $self = shift;
-
     my %args = (@_);
 
-    my $iterator = $self->_get_nav_menu_traverser();
+    return $self->_render_generic(
+        { %args , _iter_method => '_get_nav_menu_traverser',}
+    );
+}
+
+sub _render_generic
+{
+    my $self = shift;
+    my $args = shift;
+
+    my $method = $args->{_iter_method};
+
+    my $iterator = $self->$method();
     $iterator->traverse();
     my $html = $iterator->get_results();
     
@@ -1068,6 +1079,12 @@ page header:
     }
 
 =back
+
+=head2 $results = $nav_menu->render_jquery_treeview()
+
+Renders a fully expanded tree suitable for input to JQuery's treeview plugin:
+L<http://bassistance.de/jquery-plugins/jquery-plugin-treeview/> - otherwise
+the same as render() .
 
 =head2 $text = $nav_menu->gen_site_map()
 
