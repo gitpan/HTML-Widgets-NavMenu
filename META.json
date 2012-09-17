@@ -1,10 +1,10 @@
 {
    "abstract" : "A Perl Module for Generating HTML Navigation Menus",
    "author" : [
-      "Shlomi Fish E<lt>shlomif@iglu.org.ilE<gt>"
+      "Shlomi Fish, E<lt>shlomif@cpan.orgE<gt>, L<http://www.shlomifish.org/> ."
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.3901, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.120630",
    "keywords" : [
       "arrows",
       "bar",
@@ -61,7 +61,7 @@
    "provides" : {
       "HTML::Widgets::NavMenu" : {
          "file" : "lib/HTML/Widgets/NavMenu.pm",
-         "version" : "1.0601"
+         "version" : "1.0602"
       },
       "HTML::Widgets::NavMenu::Error" : {
          "file" : "lib/HTML/Widgets/NavMenu.pm",
@@ -170,5 +170,5 @@
          "url" : "http://svn.berlios.de/svnroot/repos/web-cpan/nav-menu/"
       }
    },
-   "version" : "1.0601"
+   "version" : "1.0602"
 }
