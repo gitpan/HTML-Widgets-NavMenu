@@ -3,7 +3,7 @@ use warnings;
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '1.0602';
+our $VERSION = '1.0603';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -1382,7 +1382,7 @@ L<http://www.perl.com/pub/a/2005/07/07/navwidgets.html>
 =item L<HTML::Widgets::NavMenu::HeaderRole>
 
 An HTML::Widgets::NavMenu sub-class that contains support for another
-role. Used for the navigation menu in L<http://perl-begin.berlios.de/>.
+role. Used for the navigation menu in L<http://perl-begin.org/>.
 
 =item L<HTML::Widget::SideBar>
 
