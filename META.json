@@ -61,7 +61,7 @@
    "provides" : {
       "HTML::Widgets::NavMenu" : {
          "file" : "lib/HTML/Widgets/NavMenu.pm",
-         "version" : "1.0700"
+         "version" : "1.0701"
       },
       "HTML::Widgets::NavMenu::Error" : {
          "file" : "lib/HTML/Widgets/NavMenu.pm",
@@ -170,5 +170,5 @@
          "url" : "https://bitbucket.org/shlomif/perl-html-widgets-navmenu"
       }
    },
-   "version" : "1.0700"
+   "version" : "1.0701"
 }
