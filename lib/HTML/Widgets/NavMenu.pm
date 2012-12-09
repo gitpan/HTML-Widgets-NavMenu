@@ -3,7 +3,7 @@ use warnings;
 
 package HTML::Widgets::NavMenu;
 
-our $VERSION = '1.0603';
+our $VERSION = '1.0700';
 
 package HTML::Widgets::NavMenu::Error;
 
@@ -1255,6 +1255,38 @@ Note that using absolute URLs as part of the site flow is discouraged
 because once they are accessed, the navigation within the primary site
 is lost. A better idea would be to create a separate page within the
 site, that will link to the external URL.
+
+=item li_id
+
+This is the HTML ID attribute that will be assigned to the specific
+C<< <li> >> tag of the navigation menu. So if you have:
+
+    'tree_contents' =>
+    {
+        'host' => "default",
+        'text' => "Top 1",
+        'title' => "T1 Title",
+        'expand_re' => "",
+        'subs' =>
+        [
+            {
+                'text' => "Home",
+                'url' => "",
+            },
+            {
+                'text' => "About Me",
+                'title' => "About Myself",
+                'url' => "me/",
+                'li_id' => 'about_me',
+            },
+        ],
+    },
+
+Then the HTML for the About me will look something like:
+
+    <li id="about_me">
+    <a href="me/ title="About Myself">About Me</a>
+    </li>
 
 =back
 

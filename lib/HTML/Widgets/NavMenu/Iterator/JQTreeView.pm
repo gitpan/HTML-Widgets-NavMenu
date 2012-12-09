@@ -35,16 +35,17 @@ For internal use only.
 =head1 METHODS
 
 =cut
-
 sub _calc_open_li_tag
 {
     my $self = shift;
 
+    my $id_attr = $self->_calc_li_id_attr();
+
     return
     (
         $self->_is_expanded_for_treeview()
-        ? (qq{<li class="open">})
-        : ("<li>")
+        ? (qq{<li class="open"$id_attr>})
+        : ("<li$id_attr>")
     );
 
     return;

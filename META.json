@@ -4,7 +4,7 @@
       "Shlomi Fish, E<lt>shlomif@cpan.orgE<gt>, L<http://www.shlomifish.org/> ."
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.120630",
+   "generated_by" : "Module::Build version 0.3901, CPAN::Meta::Converter version 2.120921",
    "keywords" : [
       "arrows",
       "bar",
@@ -61,7 +61,7 @@
    "provides" : {
       "HTML::Widgets::NavMenu" : {
          "file" : "lib/HTML/Widgets/NavMenu.pm",
-         "version" : "1.0603"
+         "version" : "1.0700"
       },
       "HTML::Widgets::NavMenu::Error" : {
          "file" : "lib/HTML/Widgets/NavMenu.pm",
@@ -170,5 +170,5 @@
          "url" : "https://bitbucket.org/shlomif/perl-html-widgets-navmenu"
       }
    },
-   "version" : "1.0603"
+   "version" : "1.0700"
 }

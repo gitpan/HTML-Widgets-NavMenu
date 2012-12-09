@@ -4,7 +4,7 @@ use strict;
 
 use lib './t/lib';
 
-use Test::More tests => 28;
+use Test::More tests => 30;
 
 use HTML::Widgets::NavMenu;
 use HTML::Widgets::NavMenu::HeaderRole;
@@ -1071,4 +1071,76 @@ EOF
 
     # TEST
     test_nav_menu($rendered, $expected_string, "JQTreeView Nav Menu with Hidden Item");
+}
+
+# Test HTML::Widgets::NavMenu::JQueryTreeView with li_id.
+{
+    my $nav_menu = HTML::Widgets::NavMenu::JQueryTreeView->new(
+        'path_info' => "/me/",
+        @{$test_data->{'with_ids_nav_menu'}},
+        'ul_classes' => [ "one", "two", "three" ],
+    );
+
+    my $rendered =
+        $nav_menu->render();
+
+    my $expected_string = <<"EOF";
+<ul class="one">
+<li>
+<a href="../">Home</a>
+</li>
+<li class="open" id="about_me">
+<b>About Me</b>
+<br />
+<ul class="two">
+<li id="visible">
+<a href="visible/">Visible</a>
+</li>
+<li id="FooBar">
+<a href="visible-too/">Visible Too</a>
+</li>
+</ul>
+</li>
+</ul>
+EOF
+
+    # TEST
+    test_nav_menu($rendered, $expected_string,
+        "JQTreeView Nav Menu with li_id");
+}
+
+# Test HTML::Widgets::NavMenu (non-JQueryTreeView) with li_id.
+{
+    my $nav_menu = HTML::Widgets::NavMenu->new(
+        'path_info' => "/me/",
+        @{$test_data->{'with_ids_nav_menu'}},
+        'ul_classes' => [ "one", "two", "three" ],
+    );
+
+    my $rendered =
+        $nav_menu->render();
+
+    my $expected_string = <<"EOF";
+<ul class="one">
+<li>
+<a href="../">Home</a>
+</li>
+<li id="about_me">
+<b>About Me</b>
+<br />
+<ul class="two">
+<li id="visible">
+<a href="visible/">Visible</a>
+</li>
+<li id="FooBar">
+<a href="visible-too/">Visible Too</a>
+</li>
+</ul>
+</li>
+</ul>
+EOF
+
+    # TEST
+    test_nav_menu($rendered, $expected_string,
+        "Non-JQTreeView Nav Menu with li_id");
 }
